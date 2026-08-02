@@ -769,6 +769,15 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
                       </div>
                     </div>
 
+                    {/* RED FINISH PALLET BUTTON PLACED INSIDE THE CARD */}
+                    <button
+                      onClick={handleFinishGruzomesto}
+                      className="wms-bottom-finish-btn w-full mt-4"
+                    >
+                      <Lock className="w-5 h-5" />
+                      <span>{t.finishGmBtn}</span>
+                    </button>
+
                   </div>
                 ) : (
                   /* WHEN PALLET IS CLOSED: SCANNER & INPUT HIDE COMPLETELY, RENDERING CLEAN SUCCESS CARD WITH GREEN NEXT BUTTON INSIDE */
@@ -802,17 +811,6 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
                       <span>{t.nextGmBtn}</span>
                     </button>
                   </div>
-                )}
-
-                {/* PROMINENT COMPACT BOTTOM HERO BUTTON (ONLY FINISH BUTTON IS OUTSIDE WHEN NOT CLOSED) */}
-                {!sanashClosed && (
-                  <button
-                    onClick={handleFinishGruzomesto}
-                    className="wms-bottom-finish-btn"
-                  >
-                    <Lock className="w-5 h-5" />
-                    <span>{t.finishGmBtn}</span>
-                  </button>
                 )}
 
               </div>
