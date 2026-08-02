@@ -57,6 +57,13 @@ const isPalletValid = (code) => {
   return clean.startsWith('84-000') || clean.startsWith('84000') || clean.startsWith('PL-84') || clean.startsWith('84-');
 };
 
+// HELPER: VALIDATE STRICT 80-0000... KOROB PREFIX
+const isKorobValid = (code) => {
+  if (!code) return false;
+  const clean = code.trim().toUpperCase();
+  return clean.startsWith('80-') || clean.startsWith('8000') || clean.startsWith('80-0') || clean.startsWith('80');
+};
+
 export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZone, onDispatchPlacement, onResetData, showToast }) {
   // --- LANGUAGE STATE ('uz' | 'ru') ---
   const [lang, setLang] = useState(() => {
@@ -214,6 +221,13 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
     const val = actInput.trim();
     if (!val) {
       playBeepError();
+      return;
+    }
+
+    // STRICT VALIDATION: KOROB MUST START WITH 80-
+    if (!isKorobValid(val)) {
+      playBeepError();
+      showToast(t.actPrefixError, 'error');
       return;
     }
 
@@ -396,6 +410,12 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       if (!sanashGmLocked) {
         handleScanGruzomesto(code);
       } else {
+        if (!isKorobValid(code)) {
+          playBeepError();
+          showToast(t.actPrefixError, 'error');
+          return;
+        }
+
         if (!scannedActs.includes(code)) {
           playBeepSuccess();
           setScannedActs([...scannedActs, code]);
