@@ -771,7 +771,7 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
 
                   </div>
                 ) : (
-                  /* WHEN PALLET IS CLOSED: SCANNER & INPUT HIDE COMPLETELY, RENDERING CLEAN SUCCESS CARD */
+                  /* WHEN PALLET IS CLOSED: SCANNER & INPUT HIDE COMPLETELY, RENDERING CLEAN SUCCESS CARD WITH GREEN NEXT BUTTON INSIDE */
                   <div className="wms-right-card !p-6 border-2 border-emerald-500/80 bg-emerald-950/20 shadow-2xl space-y-4">
                     <CheckCircle2 className="w-16 h-16 text-emerald-400 mx-auto" />
                     <h2 className="wms-scan-card-title text-emerald-400 text-2xl font-black">
@@ -792,25 +792,26 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
                         ))}
                       </div>
                     </div>
+
+                    {/* GREEN NEXT PALLET BUTTON PLACED INSIDE THE CARD */}
+                    <button
+                      onClick={handleResetSanash}
+                      className="wms-bottom-next-btn w-full mt-4"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span>{t.nextGmBtn}</span>
+                    </button>
                   </div>
                 )}
 
-                {/* PROMINENT COMPACT BOTTOM HERO BUTTONS */}
-                {!sanashClosed ? (
+                {/* PROMINENT COMPACT BOTTOM HERO BUTTON (ONLY FINISH BUTTON IS OUTSIDE WHEN NOT CLOSED) */}
+                {!sanashClosed && (
                   <button
                     onClick={handleFinishGruzomesto}
                     className="wms-bottom-finish-btn"
                   >
                     <Lock className="w-5 h-5" />
                     <span>{t.finishGmBtn}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleResetSanash}
-                    className="wms-bottom-next-btn"
-                  >
-                    <Plus className="w-5 h-5" />
-                    <span>{t.nextGmBtn}</span>
                   </button>
                 )}
 
