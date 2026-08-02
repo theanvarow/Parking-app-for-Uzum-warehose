@@ -40,7 +40,7 @@ export const translations = {
     actInputPlaceholder: 'Korob raqamini uring (484959)',
     scannedActsCount: 'Urilgan Koroblar',
     scannedActsEmpty: 'Hali hech qanday korob urilmadi',
-    finishGmBtn: '🔒 PALLETNI YAKUNLASH',
+    finishGmBtn: 'PALLETNI YAKUNLASH',
     nextGmBtn: 'KEYINGI PALLETNI SORTIROVKALASH',
     gmClosedSuccess: 'Pallet yopildi va saqlandi!',
 
@@ -121,7 +121,7 @@ export const translations = {
     actInputPlaceholder: 'Введите номер короба (484959)',
     scannedActsCount: 'Отсканировано коробов',
     scannedActsEmpty: 'Коробы еще не отсканированы',
-    finishGmBtn: '🔒 ЗАВЕРШИТЬ ПАЛЛЕТ',
+    finishGmBtn: 'ЗАВЕРШИТЬ ПАЛЛЕТ',
     nextGmBtn: 'СОРТИРОВАТЬ СЛЕДУЮЩИЙ ПАЛЛЕТ',
     gmClosedSuccess: 'Паллет закрыт и сохранен!',
 
