@@ -684,133 +684,115 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
 
               </div>
             ) : (
-              /* STEP 4: SKANERLASH KOROB WITH DEDICATED BOLD SIDE PANEL FOR KOROBS */
-              <div className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-5 items-start justify-center">
+              /* STEP 4: SKANERLASH KOROB */
+              <div className="wms-split-container">
                 
-                {/* LEFT COLUMN: PALLET INFO & SCANNER CARD */}
-                <div className="w-full lg:w-7/12 space-y-4">
-                  
-                  {/* Top Banner Card: Scanned Pallet Code */}
-                  <div className="wms-left-card">
-                    <span className="wms-card-label">{t.scannedGmLabel}</span>
-                    <div className="wms-card-huge-val">
-                      {sanashGmCode}
-                    </div>
+                {/* Top Banner Card: Scanned Pallet Code */}
+                <div className="wms-left-card">
+                  <span className="wms-card-label">{t.scannedGmLabel}</span>
+                  <div className="wms-card-huge-val">
+                    {sanashGmCode}
                   </div>
-
-                  {/* Main Scanning Card: Scan Korobs OR Success Summary Box */}
-                  {!sanashClosed ? (
-                    <div className="wms-right-card">
-                      
-                      <div className="wms-barcode-laser-container">
-                        <div className="wms-red-laser-line"></div>
-                        <Barcode className="w-12 h-12 text-gray-200" />
-                      </div>
-
-                      <h2 className="wms-scan-card-title text-2xl font-black">
-                        {t.scanActTitle}
-                      </h2>
-
-                      <form onSubmit={handleAddAct} className="w-full max-w-md input-mobile-group">
-                        <input
-                          ref={activeInputRef}
-                          type="text"
-                          placeholder={t.actInputPlaceholder}
-                          className="input-terminal text-center text-yellow-400 font-mono text-xl py-3 tsd-scan-input"
-                          value={actInput}
-                          onChange={(e) => setActInput(e.target.value)}
-                          autoFocus
-                          autoComplete="off"
-                        />
-
-                        {/* DEDICATED ADD BUTTON */}
-                        <button
-                          type="submit"
-                          onClick={handleAddAct}
-                          className="btn-mobile-submit"
-                        >
-                          <span>{t.btnAdd}</span>
-                        </button>
-                      </form>
-
-                    </div>
-                  ) : (
-                    /* WHEN PALLET IS CLOSED: SCANNER & INPUT HIDE COMPLETELY, RENDERING CLEAN SUCCESS CARD */
-                    <div className="wms-right-card !p-6 border-2 border-emerald-500/80 bg-emerald-950/20 shadow-2xl space-y-4">
-                      <CheckCircle2 className="w-16 h-16 text-emerald-400 mx-auto" />
-                      <h2 className="wms-scan-card-title text-emerald-400 text-2xl font-black">
-                        {t.gmClosedSuccess}
-                      </h2>
-                    </div>
-                  )}
-
-                  {/* PROMINENT COMPACT HERO BUTTONS */}
-                  {!sanashClosed ? (
-                    <button
-                      onClick={handleFinishGruzomesto}
-                      className="wms-bottom-finish-btn"
-                    >
-                      <Lock className="w-5 h-5" />
-                      <span>{t.finishGmBtn}</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleResetSanash}
-                      className="wms-bottom-next-btn"
-                    >
-                      <Plus className="w-5 h-5" />
-                      <span>{t.nextGmBtn}</span>
-                    </button>
-                  )}
-
                 </div>
 
-                {/* RIGHT COLUMN: DEDICATED SIDE PANEL FOR SCANNED KOROBS WITH LARGE BOLD FONTS */}
-                <div className="w-full lg:w-5/12 bg-slate-900/90 border-2 border-blue-500/50 rounded-3xl p-5 shadow-2xl space-y-4 self-stretch">
-                  
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-blue-400" />
-                      <h3 className="text-sm font-black text-white uppercase tracking-wider">
-                        {t.scannedActsCount}
-                      </h3>
+                {/* Main Scanning Card: Scan Korobs OR Success Summary Box */}
+                {!sanashClosed ? (
+                  <div className="wms-right-card">
+                    
+                    <div className="wms-barcode-laser-container">
+                      <div className="wms-red-laser-line"></div>
+                      <Barcode className="w-12 h-12 text-gray-200" />
                     </div>
 
-                    <span className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/50 text-blue-400 font-mono font-black text-base">
-                      {scannedActs.length} {lang === 'uz' ? 'ta' : 'шт'}
-                    </span>
-                  </div>
+                    <h2 className="wms-scan-card-title text-2xl font-black">
+                      {t.scanActTitle}
+                    </h2>
 
-                  {/* LIST OF KOROBS IN LARGE BOLD MONO FONTS */}
-                  <div className="space-y-2.5 max-h-[440px] overflow-y-auto pr-1">
-                    {scannedActs.map((act, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950 border-2 border-blue-500/60 shadow-lg text-yellow-300 font-mono text-xl font-black tracking-wider hover:border-yellow-400 transition-all"
+                    <form onSubmit={handleAddAct} className="w-full max-w-md input-mobile-group">
+                      <input
+                        ref={activeInputRef}
+                        type="text"
+                        placeholder={t.actInputPlaceholder}
+                        className="input-terminal text-center text-yellow-400 font-mono text-xl py-3 tsd-scan-input"
+                        value={actInput}
+                        onChange={(e) => setActInput(e.target.value)}
+                        autoFocus
+                        autoComplete="off"
+                      />
+
+                      {/* DEDICATED ADD BUTTON */}
+                      <button
+                        type="submit"
+                        onClick={handleAddAct}
+                        className="btn-mobile-submit"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-sans font-bold text-slate-400 bg-slate-800 px-2.5 py-1 rounded-lg">
-                            #{i + 1}
-                          </span>
-                          <span className="text-yellow-300 text-lg sm:text-xl font-black font-mono">
+                        <span>{t.btnAdd}</span>
+                      </button>
+                    </form>
+
+                    {/* Scanned Korobs List */}
+                    <div className="w-full pt-3 border-t border-gray-800/80">
+                      <div className="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-blue-400" />
+                        <span>{t.scannedActsCount} ({scannedActs.length} {lang === 'uz' ? 'ta' : 'шт'}):</span>
+                      </div>
+                      
+                      <div className="search-acts-chip-wrapper justify-center max-w-xl mx-auto">
+                        {scannedActs.map((act, i) => (
+                          <div key={i} className="search-act-chip">
                             {act}
-                          </span>
-                        </div>
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                          </div>
+                        ))}
+                        {scannedActs.length === 0 && (
+                          <span className="text-xs text-gray-500 italic py-1">{t.scannedActsEmpty}</span>
+                        )}
                       </div>
-                    ))}
+                    </div>
 
-                    {scannedActs.length === 0 && (
-                      <div className="p-8 text-center border-2 border-dashed border-slate-800 rounded-2xl bg-slate-950/50 text-slate-500 space-y-2">
-                        <FileText className="w-10 h-10 mx-auto text-slate-600" />
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                          {t.scannedActsEmpty}
-                        </p>
-                      </div>
-                    )}
                   </div>
+                ) : (
+                  /* WHEN PALLET IS CLOSED: SCANNER & INPUT HIDE COMPLETELY, RENDERING CLEAN SUCCESS CARD */
+                  <div className="wms-right-card !p-6 border-2 border-emerald-500/80 bg-emerald-950/20 shadow-2xl space-y-4">
+                    <CheckCircle2 className="w-16 h-16 text-emerald-400 mx-auto" />
+                    <h2 className="wms-scan-card-title text-emerald-400 text-2xl font-black">
+                      {t.gmClosedSuccess}
+                    </h2>
+                    
+                    <div className="w-full pt-3 border-t border-emerald-800/50">
+                      <div className="text-xs font-bold text-emerald-200/90 mb-2.5 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                        <FileText className="w-4 h-4 text-emerald-400" />
+                        <span>{t.scannedActsCount} ({scannedActs.length} {lang === 'uz' ? 'ta' : 'шт'}):</span>
+                      </div>
+                      
+                      <div className="search-acts-chip-wrapper justify-center max-w-xl mx-auto">
+                        {scannedActs.map((act, i) => (
+                          <div key={i} className="search-act-chip !border-emerald-500/50 !bg-emerald-900/40 !text-emerald-200 text-sm font-mono font-bold">
+                            {act}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                </div>
+                {/* PROMINENT COMPACT BOTTOM HERO BUTTONS */}
+                {!sanashClosed ? (
+                  <button
+                    onClick={handleFinishGruzomesto}
+                    className="wms-bottom-finish-btn"
+                  >
+                    <Lock className="w-5 h-5" />
+                    <span>{t.finishGmBtn}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleResetSanash}
+                    className="wms-bottom-next-btn"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>{t.nextGmBtn}</span>
+                  </button>
+                )}
 
               </div>
             )}
