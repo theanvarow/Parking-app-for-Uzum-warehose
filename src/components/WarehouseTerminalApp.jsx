@@ -73,18 +73,13 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
   };
 
   // --- STEP 1: AUTHORIZATION GATE STATE ---
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('wms_current_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const [isAuthorized, setIsAuthorized] = useState(() => {
-    return !!localStorage.getItem('wms_current_user');
-  });
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
-  // Login Form States
-  const [fioInput, setFioInput] = useState(currentUser?.name || "JO'RABEK SAIDIMURADOV");
-  const [selectedShift, setSelectedShift] = useState(currentUser?.shift || '1 смена');
+  // Login Form States (EMPTY BY DEFAULT SO WORKER ENTERS FIO)
+  const [fioInput, setFioInput] = useState('');
+  const [selectedShift, setSelectedShift] = useState('1 смена');
 
   // --- STEP 2: DIRECTION / MODE SELECTION STATE ---
   // 'sanash' (Сортировка) | 'parkovka' | 'poisk' | null
@@ -257,9 +252,9 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       id: sanashGmCode,
       actNumbers: scannedActs,
       palletId: sanashGmCode,
-      userName: currentUser?.name || "JO'RABEK SAIDIMURADOV",
+      userName: currentUser?.name || "Xodim",
       shift: currentUser?.shift || '1 смена',
-      counterName: currentUser?.name ? `${currentUser.name} (${currentUser.shift})` : "JO'RABEK SAIDIMURADOV (1 смена)",
+      counterName: currentUser?.name ? `${currentUser.name} (${currentUser.shift})` : "Xodim (1 смена)",
       notes: ''
     });
 
@@ -306,7 +301,7 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
     onUpdatePalletZone({
       palletId: parkGmCode,
       zoneId: trimmed,
-      loaderName: currentUser?.name ? `${currentUser.name} (${currentUser.shift})` : "JO'RABEK SAIDIMURADOV (1 смена)",
+      loaderName: currentUser?.name ? `${currentUser.name} (${currentUser.shift})` : "Xodim (1 смена)",
       notes: ''
     });
 
@@ -325,6 +320,7 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
     setIsAuthorized(false);
     setSelectedDirection(null);
     setIsSettingsOpen(false);
+    setFioInput('');
   };
 
   // Deep Search Logic with Audit History Log
@@ -352,9 +348,9 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
             {
               id: 1,
               time: box.createdAt || '2026-07-29 17:50:00',
-              worker: box.counterName || "JO'RABEK SAIDIMURADOV (1-smena)",
-              workerName: box.userName || "JO'RABEK SAIDIMURADOV",
-              userName: box.userName || "JO'RABEK SAIDIMURADOV",
+              worker: box.counterName || "Xodim (1-smena)",
+              workerName: box.userName || "Xodim",
+              userName: box.userName || "Xodim",
               shift: box.shift || '1 смена',
               action: 'Сортировка',
               actionType: 'sort',
@@ -368,9 +364,9 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
             historyLogs.push({
               id: 2,
               time: pallet.placedAt || '2026-07-29 17:54:00',
-              worker: pallet.loaderName || "JO'RABEK SAIDIMURADOV (Yuklovchi)",
-              workerName: pallet.loaderName || "JO'RABEK SAIDIMURADOV",
-              userName: pallet.loaderName || "JO'RABEK SAIDIMURADOV",
+              worker: pallet.loaderName || "Xodim (Yuklovchi)",
+              workerName: pallet.loaderName || "Xodim",
+              userName: pallet.loaderName || "Xodim",
               shift: '1 смена',
               action: 'Парковка',
               actionType: 'park',
@@ -1083,7 +1079,7 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
                           if (!fullFio && log.worker) {
                             fullFio = log.worker.replace(/\s*\([^)]*\)/, '');
                           }
-                          if (!fullFio) fullFio = currentUser?.name || "JO'RABEK SAIDIMURADOV";
+                          if (!fullFio) fullFio = currentUser?.name || "Xodim";
 
                           const shift = log.shift || '1 смена';
 

@@ -71,12 +71,12 @@ export default function App() {
 
   const handleAddBox = (newBoxData) => {
     const timestamp = getFormattedNow();
-    const cleanWorkerName = newBoxData.counterName ? newBoxData.counterName.replace(/\s*\([^)]*\)/, '') : "JO'RABEK SAIDIMURADOV";
+    const cleanWorkerName = newBoxData.counterName ? newBoxData.counterName.replace(/\s*\([^)]*\)/, '') : "Xodim";
     
     const historyLogItem = {
       id: Date.now(),
       time: timestamp,
-      worker: newBoxData.counterName || "JO'RABEK SAIDIMURADOV (1-smena)",
+      worker: newBoxData.counterName || "Xodim (1-smena)",
       workerName: cleanWorkerName,
       userName: cleanWorkerName,
       shift: newBoxData.shift || '1 смена',
@@ -131,7 +131,7 @@ export default function App() {
 
   const handleUpdatePalletZone = ({ palletId, zoneId, loaderName, notes }) => {
     const timestamp = getFormattedNow();
-    const cleanLoaderName = loaderName ? loaderName.replace(/\s*\([^)]*\)/, '') : "JO'RABEK SAIDIMURADOV";
+    const cleanLoaderName = loaderName ? loaderName.replace(/\s*\([^)]*\)/, '') : "Xodim";
 
     setDbData((prev) => {
       const targetBox = prev.boxes.find(b => b.id === palletId || b.palletId === palletId);
@@ -140,7 +140,7 @@ export default function App() {
       const parkHistoryLog = {
         id: Date.now(),
         time: timestamp,
-        worker: loaderName || "JO'RABEK SAIDIMURADOV (Yuklovchi)",
+        worker: loaderName || "Xodim (Yuklovchi)",
         workerName: cleanLoaderName,
         userName: cleanLoaderName,
         shift: '1 смена',
