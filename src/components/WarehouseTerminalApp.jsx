@@ -504,7 +504,6 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       <div className="wms-app-wrapper">
         <header className="wms-header">
           <div className="wms-header-left">
-            <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-lg border border-emerald-500/50 object-cover flex-shrink-0" />
             <button onClick={handleSwitchUser} className="wms-back-btn">
               <ArrowLeft className="w-5 h-5" />
             </button>
