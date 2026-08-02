@@ -427,6 +427,16 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       <div className="auth-wrapper">
         <div className="auth-card">
           
+          {/* HIGH-TECH UZUM WMS LOGO */}
+          <div className="text-center mb-3">
+            <img
+              src="/logo.png"
+              alt="Uzum WMS Logo"
+              className="w-24 h-24 mx-auto mb-2 rounded-2xl shadow-2xl border-2 border-emerald-500/50 object-cover"
+            />
+            <span className="text-[10px] font-black tracking-widest text-emerald-400 uppercase block">UZUM WAREHOUSE TERMINAL</span>
+          </div>
+
           <div className="flex items-center justify-between mb-2">
             <h2 className="auth-title !mb-0">
               {t.authTitle}
@@ -504,6 +514,7 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       <div className="wms-app-wrapper">
         <header className="wms-header">
           <div className="wms-header-left">
+            <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-lg border border-emerald-500/50 object-cover flex-shrink-0" />
             <button onClick={handleSwitchUser} className="wms-back-btn">
               <ArrowLeft className="w-5 h-5" />
             </button>
