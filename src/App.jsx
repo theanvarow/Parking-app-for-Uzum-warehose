@@ -104,7 +104,8 @@ export default function App() {
         updatedPallets[existingPalletIndex] = {
           ...updatedPallets[existingPalletIndex],
           boxIds: [newBoxData.id],
-          status: 'created'
+          status: 'created',
+          photoUrl: newBoxData.photoUrl || updatedPallets[existingPalletIndex].photoUrl || null
         };
       } else {
         updatedPallets.unshift({
@@ -114,7 +115,8 @@ export default function App() {
           loaderName: null,
           status: 'created',
           placedAt: null,
-          notes: ''
+          notes: '',
+          photoUrl: newBoxData.photoUrl || null
         });
       }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Menu, Settings, X, CheckCircle2, Search, Barcode, MapPin, FileText, Globe, Clock, Boxes, Warehouse, FileSearch, Lock, QrCode, ArrowRight, Plus, Target } from 'lucide-react';
+import { ArrowLeft, Menu, Settings, X, CheckCircle2, Search, Barcode, MapPin, FileText, Globe, Clock, Boxes, Warehouse, FileSearch, Lock, QrCode, ArrowRight, Plus, Target, Camera, Image, Trash2, Maximize2 } from 'lucide-react';
 import QRScannerModal from './QRScannerModal';
 import { translations } from '../data/translations';
 
@@ -107,6 +107,13 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
 
   // --- POISK WORKFLOW STATE ---
   const [searchActQuery, setSearchActQuery] = useState('');
+
+  // --- PHOTO CAPTURE & LIGHTBOX STATE ---
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [isCapturingPhoto, setIsCapturingPhoto] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const photoFileInputRef = useRef(null);
 
   // Drawers & Modals State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -247,7 +254,52 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
     }, 50);
   };
 
-  // Handle Step 4: Finish/Close Pallet ("ZA VER SHIT / YAKUNLASH")
+  // Handle Photo Capture File Selection & Compression
+  const handlePhotoFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    setIsCapturingPhoto(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const MAX_SIZE = 800;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round((height * MAX_SIZE) / width);
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width = Math.round((width * MAX_SIZE) / height);
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        setCapturedPhoto(compressedDataUrl);
+        setIsCapturingPhoto(false);
+      };
+      img.onerror = () => {
+        setIsCapturingPhoto(false);
+        showToast(lang === 'uz' ? 'Rasm yuklashda xatolik!' : 'Ошибка загрузки фото!', 'error');
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Step 4: Click Finish Pallet -> Open Photo Capture Modal Prompt
   const handleFinishGruzomesto = () => {
     if (!sanashGmCode) {
       playBeepError();
@@ -261,6 +313,12 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       return;
     }
 
+    // Open Photo Capture Modal
+    setShowPhotoModal(true);
+  };
+
+  // Confirm Pallet Finish (With or Without Photo)
+  const handleConfirmFinishWithPhoto = (photoUrlToSave = null) => {
     playBeepSuccess();
     onAddBox({
       id: sanashGmCode,
@@ -269,10 +327,12 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       userName: currentUser?.name || "Xodim",
       shift: currentUser?.shift || '1 смена',
       counterName: currentUser?.name ? `${currentUser.name} (${currentUser.shift})` : "Xodim (1 смена)",
-      notes: ''
+      notes: '',
+      photoUrl: photoUrlToSave || capturedPhoto || null
     });
 
     setSanashClosed(true);
+    setShowPhotoModal(false);
     showToast(t.gmClosedSuccess, 'success');
   };
 
@@ -1080,6 +1140,35 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
                       </div>
                     </div>
 
+                    {/* STACK CARD PHOTO: PALLET FOTO SURATI */}
+                    <div className="search-card-item">
+                      <div className="search-card-header">
+                        <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>{t.searchPhotoHeader}</span>
+                      </div>
+
+                      {(searchResult.box?.photoUrl || searchResult.pallet?.photoUrl) ? (
+                        <div
+                          className="relative group mx-auto my-1 rounded-2xl overflow-hidden border-2 border-cyan-500/50 shadow-xl max-w-xs cursor-pointer"
+                          onClick={() => setLightboxPhoto(searchResult.box?.photoUrl || searchResult.pallet?.photoUrl)}
+                        >
+                          <img
+                            src={searchResult.box?.photoUrl || searchResult.pallet?.photoUrl}
+                            alt="Pallet Photo"
+                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity gap-2 text-white font-bold text-xs">
+                            <Maximize2 className="w-5 h-5 text-cyan-300" />
+                            <span>{lang === 'uz' ? 'Kattalashtirish' : 'Увеличить'}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 text-center rounded-xl bg-slate-950 border border-slate-800/80 text-slate-500 text-xs italic">
+                          📷 {t.noPhotoCaptured}
+                        </div>
+                      )}
+                    </div>
+
                     {/* STACK CARD 4: TIMELINE AUDIT HISTORY LOG */}
                     <div className="search-card-item !text-left !items-stretch">
                       <div className="search-card-header justify-center">
@@ -1199,6 +1288,125 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 📸 PHOTO CAPTURE MODAL DIALOG */}
+      {/* ========================================================= */}
+      {showPhotoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-md bg-slate-900 border-2 border-cyan-500/60 rounded-3xl p-6 shadow-2xl space-y-5 text-center relative overflow-hidden">
+            
+            {/* CLOSE BUTTON */}
+            <button
+              onClick={() => setShowPhotoModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-1">
+              <div className="p-3 rounded-2xl bg-cyan-500/20 w-fit mx-auto border border-cyan-500/40">
+                <Camera className="w-10 h-10 text-cyan-400" />
+              </div>
+              <h3 className="text-xl font-black text-white pt-2">
+                {t.photoModalTitle}
+              </h3>
+              <p className="text-xs text-slate-400 font-bold">
+                {t.photoModalSubtitle}
+              </p>
+            </div>
+
+            {/* PALLET BADGE SUMMARY */}
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-400">Pallet:</span>
+              <span className="font-mono font-black text-yellow-300 text-sm">{sanashGmCode}</span>
+              <span className="font-bold text-blue-400">({scannedActs.length} {lang === 'uz' ? 'ta korob' : 'коробов'})</span>
+            </div>
+
+            {/* HIDDEN FILE / CAMERA INPUT */}
+            <input
+              ref={photoFileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoFileChange}
+            />
+
+            {/* CAPTURED PHOTO PREVIEW OR CAPTURE BUTTON */}
+            {capturedPhoto ? (
+              <div className="space-y-3">
+                <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500/70 shadow-lg max-h-56">
+                  <img src={capturedPhoto} alt="Captured Pallet" className="w-full h-56 object-cover" />
+                  <span className="absolute bottom-2 right-2 bg-emerald-950/80 text-emerald-300 text-[10px] font-black px-2 py-1 rounded-lg border border-emerald-500/50">
+                    ✓ Surat yuklandi
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setCapturedPhoto(null);
+                      if (photoFileInputRef.current) photoFileInputRef.current.click();
+                    }}
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                    <span>{t.retakePhotoBtn}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  if (photoFileInputRef.current) photoFileInputRef.current.click();
+                }}
+                disabled={isCapturingPhoto}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-black text-base flex items-center justify-center gap-2 shadow-xl border border-cyan-400/40 active:scale-98 transition-all"
+              >
+                <Camera className="w-6 h-6 animate-pulse" />
+                <span>{isCapturingPhoto ? (lang === 'uz' ? 'Surat tayyorlanmoqda...' : 'Обработка фото...') : t.takePhotoBtn}</span>
+              </button>
+            )}
+
+            {/* ACTION CONFIRMATION & SKIP BUTTONS */}
+            <div className="space-y-2 pt-2 border-t border-slate-800">
+              <button
+                onClick={() => handleConfirmFinishWithPhoto(capturedPhoto)}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg active:scale-98 transition-all"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                <span>{t.confirmPhotoBtn}</span>
+              </button>
+
+              <button
+                onClick={() => handleConfirmFinishWithPhoto(null)}
+                className="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                {t.skipPhotoBtn}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 🔍 LIGHTBOX FULL-SCREEN IMAGE PREVIEW */}
+      {/* ========================================================= */}
+      {lightboxPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-lg animate-fadeIn" onClick={() => setLightboxPhoto(null)}>
+          <button
+            onClick={() => setLightboxPhoto(null)}
+            className="absolute top-5 right-5 p-3 rounded-full bg-slate-800/80 text-white hover:bg-slate-700 transition-colors z-10"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div className="max-w-4xl max-h-[90vh] p-2" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxPhoto} alt="Full Screen Preview" className="max-w-full max-h-[85vh] rounded-2xl border-2 border-cyan-500/60 shadow-2xl object-contain" />
           </div>
         </div>
       )}

@@ -45,6 +45,16 @@ export const translations = {
     nextGmBtn: 'KEYINGI PALLETNI SORTIROVKALASH',
     gmClosedSuccess: 'Pallet yopildi va saqlandi!',
 
+    // Photo Capture Workflow
+    photoModalTitle: '📸 PALLET SURATINI OLISH',
+    photoModalSubtitle: 'Palletni yopishdan oldin uning foto suratini biriktiring',
+    takePhotoBtn: '📷 SURATGA OLISH / GALEREYA',
+    retakePhotoBtn: '🔄 QAYTA SURATGA OLISH',
+    confirmPhotoBtn: '✅ SURATNI SAQLASH VA PALLETNI YOPISH',
+    skipPhotoBtn: '⏭️ Suratsiz yopish',
+    searchPhotoHeader: '📷 PALLET FOTO SURATI',
+    noPhotoCaptured: 'Foto surat biriktirilmagan',
+
     // Mobile Action Buttons
     btnNext: 'KEYINGI →',
     btnAdd: 'QO\'SHISH',
@@ -126,6 +136,16 @@ export const translations = {
     finishGmBtn: 'ЗАВЕРШИТЬ ПАЛЛЕТ',
     nextGmBtn: 'СОРТИРОВАТЬ СЛЕДУЮЩИЙ ПАЛЛЕТ',
     gmClosedSuccess: 'Паллет закрыт и сохранен!',
+
+    // Photo Capture Workflow
+    photoModalTitle: '📸 СФОТОГРАФИРОВАТЬ ПАЛЛЕТ',
+    photoModalSubtitle: 'Перед закрытием паллета прикрепите его фотографию',
+    takePhotoBtn: '📷 СДЕЛАТЬ ФОТО / ГАЛЕРЕЯ',
+    retakePhotoBtn: '🔄 ПЕРЕСФОТОГРАФИРОВАТЬ',
+    confirmPhotoBtn: '✅ СОХРАНИТЬ И ЗАКРЫТЬ ПАЛЛЕТ',
+    skipPhotoBtn: '⏭️ Закрыть без фото',
+    searchPhotoHeader: '📷 ФОТОГРАФИЯ ПАЛЛЕТА',
+    noPhotoCaptured: 'Фотография не прикреплена',
 
     // Mobile Action Buttons
     btnNext: 'ДАЛЕЕ →',
