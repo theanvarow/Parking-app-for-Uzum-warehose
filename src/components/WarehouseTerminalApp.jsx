@@ -661,7 +661,7 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
         {/* 📦 WORKFLOW 1: SORTIROVKA */}
         {/* ========================================================= */}
         {selectedDirection === 'sanash' && (
-          <>
+          <div className="w-full max-w-2xl mx-auto space-y-4">
             {/* STEP 3: SKANERLASH PALLET */}
             {!sanashGmLocked ? (
               <div className="wms-big-scan-card space-y-4 !p-6">
@@ -815,14 +815,14 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
 
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* ========================================================= */}
         {/* 🚜 WORKFLOW 2: PARKOVKA */}
         {/* ========================================================= */}
         {selectedDirection === 'parkovka' && (
-          <div className="w-full max-w-2xl space-y-4">
+          <div className="w-full max-w-2xl mx-auto space-y-4">
             
             {/* STEP 1: SCAN PALLET */}
             {parkStep === 1 && (
@@ -963,7 +963,7 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
         {/* 🔍 WORKFLOW 3: KOROBNI QIDIRISH */}
         {/* ========================================================= */}
         {selectedDirection === 'poisk' && (
-          <div className="w-full max-w-2xl wms-big-scan-card space-y-3.5 text-left items-stretch !p-4">
+          <div className="w-full max-w-2xl mx-auto wms-big-scan-card space-y-3.5 text-left items-stretch !p-4">
             
             {/* HIGH-TECH PURPLE BARCODE LASER SCANNER ANIMATION HEADER */}
             <div className="wms-barcode-laser-container mx-auto !mb-2 !w-24 !h-16">
