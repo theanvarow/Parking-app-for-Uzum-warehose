@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS zones (
   sector VARCHAR(50),
   row_num INT,
   shelf INT,
-  capacity INT DEFAULT 10
+  capacity INT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS boxes (

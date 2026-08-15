@@ -12,21 +12,21 @@ const DIST_DIR = path.join(__dirname, 'dist');
 
 // INITIAL DEFAULT DATABASE
 const DEFAULT_ZONES = [
-  { id: 'ZONE-A1', name: 'Sektor A - Qabul 1', sector: 'A', row: 1, shelf: 1, capacity: 5 },
-  { id: 'ZONE-A2', name: 'Sektor A - Qabul 2', sector: 'A', row: 1, shelf: 2, capacity: 5 },
-  { id: 'ZONE-A3', name: 'Sektor A - Qabul 3', sector: 'A', row: 2, shelf: 1, capacity: 5 },
+  { id: 'ZONE-A1', name: 'Sektor A - Qabul 1', sector: 'A', row: 1, shelf: 1, capacity: null },
+  { id: 'ZONE-A2', name: 'Sektor A - Qabul 2', sector: 'A', row: 1, shelf: 2, capacity: null },
+  { id: 'ZONE-A3', name: 'Sektor A - Qabul 3', sector: 'A', row: 2, shelf: 1, capacity: null },
   
-  { id: 'ZONE-B1', name: 'Sektor B - Parkovka 1', sector: 'B', row: 1, shelf: 1, capacity: 8 },
-  { id: 'ZONE-B2', name: 'Sektor B - Parkovka 2', sector: 'B', row: 1, shelf: 2, capacity: 8 },
-  { id: 'ZONE-B3', name: 'Sektor B - Parkovka 3', sector: 'B', row: 2, shelf: 1, capacity: 8 },
-  { id: 'ZONE-B4', name: 'Sektor B - Parkovka 4', sector: 'B', row: 2, shelf: 2, capacity: 8 },
+  { id: 'ZONE-B1', name: 'Sektor B - Parkovka 1', sector: 'B', row: 1, shelf: 1, capacity: null },
+  { id: 'ZONE-B2', name: 'Sektor B - Parkovka 2', sector: 'B', row: 1, shelf: 2, capacity: null },
+  { id: 'ZONE-B3', name: 'Sektor B - Parkovka 3', sector: 'B', row: 2, shelf: 1, capacity: null },
+  { id: 'ZONE-B4', name: 'Sektor B - Parkovka 4', sector: 'B', row: 2, shelf: 2, capacity: null },
 
-  { id: 'ZONE-C1', name: 'Sektor C - Javon 1 (2-qavat)', sector: 'C', row: 1, shelf: 1, capacity: 10 },
-  { id: 'ZONE-C2', name: 'Sektor C - Javon 2 (2-qavat)', sector: 'C', row: 1, shelf: 2, capacity: 10 },
-  { id: 'ZONE-C3', name: 'Sektor C - Javon 3 (3-qavat)', sector: 'C', row: 2, shelf: 1, capacity: 10 },
+  { id: 'ZONE-C1', name: 'Sektor C - Javon 1 (2-qavat)', sector: 'C', row: 1, shelf: 1, capacity: null },
+  { id: 'ZONE-C2', name: 'Sektor C - Javon 2 (2-qavat)', sector: 'C', row: 1, shelf: 2, capacity: null },
+  { id: 'ZONE-C3', name: 'Sektor C - Javon 3 (3-qavat)', sector: 'C', row: 2, shelf: 1, capacity: null },
 
-  { id: 'ZONE-D1', name: 'Sektor D - Razmeshcheniye', sector: 'D', row: 1, shelf: 1, capacity: 12 },
-  { id: 'ZONE-D2', name: 'Sektor D - Yuklash Hududi', sector: 'D', row: 1, shelf: 2, capacity: 12 },
+  { id: 'ZONE-D1', name: 'Sektor D - Razmeshcheniye', sector: 'D', row: 1, shelf: 1, capacity: null },
+  { id: 'ZONE-D2', name: 'Sektor D - Yuklash Hududi', sector: 'D', row: 1, shelf: 2, capacity: null },
 ];
 
 const DEFAULT_BOXES = [
