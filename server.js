@@ -2,6 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { initDb, fetchDataFromDb, saveDataToDb } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,12 +100,26 @@ function loadDatabase() {
 function saveDatabase(data) {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    saveDataToDb(data);
   } catch (err) {
     console.error('Error saving data_store.json:', err);
   }
 }
 
 let db = loadDatabase();
+
+// Attempt PostgreSQL Initialization on startup
+initDb().then(async (success) => {
+  if (success) {
+    const dbData = await fetchDataFromDb();
+    if (dbData && dbData.boxes && dbData.boxes.length > 0) {
+      db = dbData;
+      console.log('📦 Loaded PostgreSQL database records into server memory.');
+    } else {
+      saveDataToDb(db);
+    }
+  }
+});
 
 // MIME TYPES FOR STATIC FILE SERVING
 const MIME_TYPES = {
