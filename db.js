@@ -168,6 +168,35 @@ export async function saveDataToDb(data) {
         }
       }
 
+      // 3. Sync History Logs
+      if (Array.isArray(data.boxes)) {
+        for (const box of data.boxes) {
+          if (Array.isArray(box.historyLogs)) {
+            for (const log of box.historyLogs) {
+              await client.query(
+                `INSERT INTO history_logs (id, time, worker, worker_name, user_name, shift, action, action_type, gm_id, zone_id, count, details)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                 ON CONFLICT (id) DO NOTHING`,
+                [
+                  log.id || Date.now(),
+                  log.time || new Date().toISOString(),
+                  log.worker || box.counterName || '',
+                  log.workerName || box.userName || '',
+                  log.userName || box.userName || '',
+                  log.shift || box.shift || '1 смена',
+                  log.action || 'Сортировка',
+                  log.actionType || 'sort',
+                  log.gmId || box.id,
+                  log.zoneId || null,
+                  log.count || (box.actNumbers ? box.actNumbers.length : 0),
+                  log.details || ''
+                ]
+              );
+            }
+          }
+        }
+      }
+
       await client.query('COMMIT');
       return true;
     } catch (err) {
