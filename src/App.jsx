@@ -94,123 +94,117 @@ export default function App() {
       historyLogs: [historyLogItem]
     };
 
-    setDbData((prev) => {
-      const updatedBoxes = [boxWithLogs, ...prev.boxes];
+    const updatedBoxes = [boxWithLogs, ...dbData.boxes];
 
-      let updatedPallets = [...prev.pallets];
-      const existingPalletIndex = updatedPallets.findIndex((p) => p.id === newBoxData.palletId || p.id === newBoxData.id);
+    let updatedPallets = [...dbData.pallets];
+    const existingPalletIndex = updatedPallets.findIndex((p) => p.id === newBoxData.palletId || p.id === newBoxData.id);
 
-      if (existingPalletIndex >= 0) {
-        updatedPallets[existingPalletIndex] = {
-          ...updatedPallets[existingPalletIndex],
-          boxIds: [newBoxData.id],
-          status: 'created',
-          photoUrl: newBoxData.photoUrl || updatedPallets[existingPalletIndex].photoUrl || null
-        };
-      } else {
-        updatedPallets.unshift({
-          id: newBoxData.palletId || newBoxData.id,
-          boxIds: [newBoxData.id],
-          zoneId: null,
-          loaderName: null,
-          status: 'created',
-          placedAt: null,
-          notes: '',
-          photoUrl: newBoxData.photoUrl || null
-        });
-      }
-
-      const nextData = {
-        ...prev,
-        boxes: updatedBoxes,
-        pallets: updatedPallets
+    if (existingPalletIndex >= 0) {
+      updatedPallets[existingPalletIndex] = {
+        ...updatedPallets[existingPalletIndex],
+        boxIds: [newBoxData.id],
+        status: 'created',
+        photoUrl: newBoxData.photoUrl || updatedPallets[existingPalletIndex].photoUrl || null
       };
+    } else {
+      updatedPallets.unshift({
+        id: newBoxData.palletId || newBoxData.id,
+        boxIds: [newBoxData.id],
+        zoneId: null,
+        loaderName: null,
+        status: 'created',
+        placedAt: null,
+        notes: '',
+        photoUrl: newBoxData.photoUrl || null
+      });
+    }
 
-      syncWithServer(nextData);
-      return nextData;
-    });
+    const nextData = {
+      ...dbData,
+      boxes: updatedBoxes,
+      pallets: updatedPallets
+    };
+
+    setDbData(nextData);
+    syncWithServer(nextData);
   };
 
   const handleUpdatePalletZone = ({ palletId, zoneId, loaderName, notes }) => {
     const timestamp = getFormattedNow();
     const cleanLoaderName = loaderName ? loaderName.replace(/\s*\([^)]*\)/, '') : "Xodim";
 
-    setDbData((prev) => {
-      const targetBox = prev.boxes.find(b => b.id === palletId || b.palletId === palletId);
-      const prevLogs = targetBox?.historyLogs || [];
+    const targetBox = dbData.boxes.find(b => b.id === palletId || b.palletId === palletId);
+    const prevLogs = targetBox?.historyLogs || [];
 
-      const parkHistoryLog = {
-        id: Date.now(),
-        time: timestamp,
-        worker: loaderName || "Xodim (Yuklovchi)",
-        workerName: cleanLoaderName,
-        userName: cleanLoaderName,
-        shift: '1 смена',
-        action: 'Парковка',
-        actionType: 'park',
-        gmId: palletId,
-        zoneId: zoneId,
-        details: `${palletId} pallet ${zoneId} zonasiga joylashtirildi`
-      };
+    const parkHistoryLog = {
+      id: Date.now(),
+      time: timestamp,
+      worker: loaderName || "Xodim (Yuklovchi)",
+      workerName: cleanLoaderName,
+      userName: cleanLoaderName,
+      shift: '1 смена',
+      action: 'Парковка',
+      actionType: 'park',
+      gmId: palletId,
+      zoneId: zoneId,
+      details: `${palletId} pallet ${zoneId} zonasiga joylashtirildi`
+    };
 
-      const updatedBoxes = prev.boxes.map((b) => {
-        if (b.id === palletId || b.palletId === palletId) {
-          return {
-            ...b,
-            historyLogs: [...prevLogs, parkHistoryLog]
-          };
-        }
-        return b;
-      });
+    const updatedBoxes = dbData.boxes.map((b) => {
+      if (b.id === palletId || b.palletId === palletId) {
+        return {
+          ...b,
+          historyLogs: [...prevLogs, parkHistoryLog]
+        };
+      }
+      return b;
+    });
 
-      let palletFound = false;
-      const updatedPallets = prev.pallets.map((p) => {
-        if (p.id === palletId) {
-          palletFound = true;
-          return {
-            ...p,
-            zoneId,
-            loaderName: cleanLoaderName,
-            status: 'parked',
-            placedAt: timestamp,
-            notes: notes || p.notes
-          };
-        }
-        return p;
-      });
-
-      if (!palletFound) {
-        updatedPallets.unshift({
-          id: palletId,
-          boxIds: [palletId],
+    let palletFound = false;
+    const updatedPallets = dbData.pallets.map((p) => {
+      if (p.id === palletId) {
+        palletFound = true;
+        return {
+          ...p,
           zoneId,
           loaderName: cleanLoaderName,
           status: 'parked',
           placedAt: timestamp,
-          notes: notes || ''
-        });
+          notes: notes || p.notes
+        };
       }
-
-      const nextData = {
-        ...prev,
-        boxes: updatedBoxes,
-        pallets: updatedPallets
-      };
-
-      syncWithServer(nextData);
-      return nextData;
+      return p;
     });
+
+    if (!palletFound) {
+      updatedPallets.unshift({
+        id: palletId,
+        boxIds: [palletId],
+        zoneId,
+        loaderName: cleanLoaderName,
+        status: 'parked',
+        placedAt: timestamp,
+        notes: notes || ''
+      });
+    }
+
+    const nextData = {
+      ...dbData,
+      boxes: updatedBoxes,
+      pallets: updatedPallets
+    };
+
+    setDbData(nextData);
+    syncWithServer(nextData);
   };
 
   const handleDispatchPlacement = (boxId) => {
-    setDbData((prev) => {
-      const nextData = {
-        ...prev,
-        boxes: prev.boxes.filter((b) => b.id !== boxId)
-      };
-      syncWithServer(nextData);
-      return nextData;
-    });
+    const nextData = {
+      ...dbData,
+      boxes: dbData.boxes.filter((b) => b.id !== boxId)
+    };
+    setDbData(nextData);
+    syncWithServer(nextData);
   };
 
   const handleResetData = async () => {
