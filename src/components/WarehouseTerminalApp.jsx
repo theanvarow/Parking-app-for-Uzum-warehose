@@ -65,12 +65,12 @@ const isKorobValid = (code) => {
 };
 
 export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZone, onDispatchPlacement, onResetData, showToast }) {
-  // --- LANGUAGE STATE ('uz' | 'ru') ---
+  // --- LANGUAGE STATE ('ru' | 'uz') ---
   const [lang, setLang] = useState(() => {
-    return localStorage.getItem('wms_lang') || 'uz';
+    return localStorage.getItem('wms_lang') || 'ru';
   });
 
-  const t = translations[lang] || translations.uz;
+  const t = translations[lang] || translations.ru;
 
   const toggleLanguage = () => {
     const nextLang = lang === 'uz' ? 'ru' : 'uz';
