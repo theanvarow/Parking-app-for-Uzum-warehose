@@ -30,15 +30,16 @@ if (fs.existsSync(envPath)) {
 
 const { Pool } = pg;
 
-// PostgreSQL Connection String (Environment variable or local PostgreSQL fallback)
-const connectionString = process.env.DATABASE_URL || '';
+// PostgreSQL Connection String (Environment variable or direct Neon Cloud fallback for Vercel)
+const NEON_DB_FALLBACK = "postgresql://neondb_owner:npg_7vN5cgAiwmoD@ep-rough-dust-axq99tna-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require";
+const connectionString = process.env.DATABASE_URL || NEON_DB_FALLBACK;
 
-const isLocalhost = !connectionString || connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
 
 export const pool = new Pool({
-  connectionString: connectionString || 'postgres://postgres:postgres@localhost:5432/wms_db',
+  connectionString: connectionString || NEON_DB_FALLBACK,
   ssl: isLocalhost ? false : { rejectUnauthorized: false },
-  connectionTimeoutMillis: 5000
+  connectionTimeoutMillis: 10000
 });
 
 export const query = (text, params) => pool.query(text, params);
