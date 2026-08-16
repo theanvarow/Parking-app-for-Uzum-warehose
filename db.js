@@ -7,9 +7,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // AUTO-LOAD .env FILE IF PRESENT
-const envPath = path.join(__dirname, '.env');
-if (fs.existsSync(envPath)) {
-  try {
+try {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
     if (typeof process.loadEnvFile === 'function') {
       process.loadEnvFile(envPath);
     } else {
@@ -25,8 +25,8 @@ if (fs.existsSync(envPath)) {
         }
       });
     }
-  } catch (e) {}
-}
+  }
+} catch (e) {}
 
 const { Pool } = pg;
 

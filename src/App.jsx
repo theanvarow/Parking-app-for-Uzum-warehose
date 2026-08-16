@@ -89,29 +89,38 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Broadcast state updates to server API
+  // Broadcast state updates to server API with clear Toast feedback
   const syncWithServer = async (updatedData) => {
+    let success = false;
     try {
       let res = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
       });
-      if (!res.ok) {
-        await fetch('http://localhost:3001/api/sync', {
+      if (res.ok) {
+        success = true;
+      } else {
+        let res2 = await fetch('http://localhost:3001/api/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedData)
         });
+        if (res2.ok) success = true;
       }
     } catch (e) {
       try {
-        await fetch('http://localhost:3001/api/sync', {
+        let res3 = await fetch('http://localhost:3001/api/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedData)
         });
+        if (res3.ok) success = true;
       } catch (err) {}
+    }
+
+    if (success) {
+      showToast('☁️ Neon SQL bazasiga saqlandi!', 'success');
     }
   };
 
