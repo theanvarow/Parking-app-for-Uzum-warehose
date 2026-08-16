@@ -52,16 +52,12 @@ const playBeepError = () => {
 
 // HELPER: VALIDATE STRICT 84-0000... PALLET PREFIX
 const isPalletValid = (code) => {
-  if (!code) return false;
-  const clean = code.trim().toUpperCase();
-  return clean.startsWith('84-000') || clean.startsWith('84000') || clean.startsWith('PL-84') || clean.startsWith('84-');
+  return Boolean(code && code.trim().length > 0);
 };
 
-// HELPER: VALIDATE STRICT 80-0000... KOROB PREFIX
+// HELPER: VALIDATE KOROB CODE (ACCEPT ANY NON-EMPTY CODE)
 const isKorobValid = (code) => {
-  if (!code) return false;
-  const clean = code.trim().toUpperCase();
-  return clean.startsWith('80-') || clean.startsWith('8000') || clean.startsWith('80-0') || clean.startsWith('80');
+  return Boolean(code && code.trim().length > 0);
 };
 
 export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZone, onDispatchPlacement, onResetData, showToast }) {
