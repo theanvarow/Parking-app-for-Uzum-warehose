@@ -107,65 +107,72 @@ export async function fetchDataFromDb() {
 }
 
 // Save or sync dataset into PostgreSQL tables
+// Save or sync dataset into PostgreSQL tables
 export async function saveDataToDb(data) {
   if (!data) return false;
   try {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-
       // 1. Sync Boxes
       if (Array.isArray(data.boxes)) {
         for (const box of data.boxes) {
-          await client.query(
-            `INSERT INTO boxes (id, act_numbers, pallet_id, counter_name, user_name, shift, created_at, status, notes)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-             ON CONFLICT (id) DO UPDATE SET
-               act_numbers = EXCLUDED.act_numbers,
-               pallet_id = EXCLUDED.pallet_id,
-               counter_name = EXCLUDED.counter_name,
-               user_name = EXCLUDED.user_name,
-               shift = EXCLUDED.shift,
-               status = EXCLUDED.status,
-               notes = EXCLUDED.notes`,
-            [
-              box.id,
-              JSON.stringify(box.actNumbers || []),
-              box.palletId || box.id,
-              box.counterName || '',
-              box.userName || '',
-              box.shift || '1 смена',
-              box.createdAt || new Date(),
-              box.status || 'on_pallet',
-              box.notes || ''
-            ]
-          );
+          try {
+            await client.query(
+              `INSERT INTO boxes (id, act_numbers, pallet_id, counter_name, user_name, shift, created_at, status, notes)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+               ON CONFLICT (id) DO UPDATE SET
+                 act_numbers = EXCLUDED.act_numbers,
+                 pallet_id = EXCLUDED.pallet_id,
+                 counter_name = EXCLUDED.counter_name,
+                 user_name = EXCLUDED.user_name,
+                 shift = EXCLUDED.shift,
+                 status = EXCLUDED.status,
+                 notes = EXCLUDED.notes`,
+              [
+                box.id,
+                JSON.stringify(box.actNumbers || []),
+                box.palletId || box.id,
+                box.counterName || '',
+                box.userName || '',
+                box.shift || '1 смена',
+                box.createdAt || new Date(),
+                box.status || 'on_pallet',
+                box.notes || ''
+              ]
+            );
+          } catch (errBox) {
+            console.error(`⚠️ Error saving box ${box.id} to DB:`, errBox.message);
+          }
         }
       }
 
       // 2. Sync Pallets
       if (Array.isArray(data.pallets)) {
         for (const p of data.pallets) {
-          await client.query(
-            `INSERT INTO pallets (id, box_ids, zone_id, loader_name, status, placed_at, notes)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             ON CONFLICT (id) DO UPDATE SET
-               box_ids = EXCLUDED.box_ids,
-               zone_id = EXCLUDED.zone_id,
-               loader_name = EXCLUDED.loader_name,
-               status = EXCLUDED.status,
-               placed_at = EXCLUDED.placed_at,
-               notes = EXCLUDED.notes`,
-            [
-              p.id,
-              JSON.stringify(p.boxIds || []),
-              p.zoneId || null,
-              p.loaderName || null,
-              p.status || 'created',
-              p.placedAt || null,
-              p.notes || ''
-            ]
-          );
+          try {
+            await client.query(
+              `INSERT INTO pallets (id, box_ids, zone_id, loader_name, status, placed_at, notes)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)
+               ON CONFLICT (id) DO UPDATE SET
+                 box_ids = EXCLUDED.box_ids,
+                 zone_id = EXCLUDED.zone_id,
+                 loader_name = EXCLUDED.loader_name,
+                 status = EXCLUDED.status,
+                 placed_at = EXCLUDED.placed_at,
+                 notes = EXCLUDED.notes`,
+              [
+                p.id,
+                JSON.stringify(p.boxIds || []),
+                p.zoneId || null,
+                p.loaderName || null,
+                p.status || 'created',
+                p.placedAt || null,
+                p.notes || ''
+              ]
+            );
+          } catch (errPallet) {
+            console.error(`⚠️ Error saving pallet ${p.id} to DB:`, errPallet.message);
+          }
         }
       }
 
@@ -174,36 +181,33 @@ export async function saveDataToDb(data) {
         for (const box of data.boxes) {
           if (Array.isArray(box.historyLogs)) {
             for (const log of box.historyLogs) {
-              await client.query(
-                `INSERT INTO history_logs (id, time, worker, worker_name, user_name, shift, action, action_type, gm_id, zone_id, count, details)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                 ON CONFLICT (id) DO NOTHING`,
-                [
-                  log.id || Date.now(),
-                  log.time || new Date().toISOString(),
-                  log.worker || box.counterName || '',
-                  log.workerName || box.userName || '',
-                  log.userName || box.userName || '',
-                  log.shift || box.shift || '1 смена',
-                  log.action || 'Сортировка',
-                  log.actionType || 'sort',
-                  log.gmId || box.id,
-                  log.zoneId || null,
-                  log.count || (box.actNumbers ? box.actNumbers.length : 0),
-                  log.details || ''
-                ]
-              );
+              try {
+                await client.query(
+                  `INSERT INTO history_logs (time, worker, worker_name, user_name, shift, action, action_type, gm_id, zone_id, count, details)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                  [
+                    log.time || new Date().toISOString(),
+                    log.worker || box.counterName || '',
+                    log.workerName || box.userName || '',
+                    log.userName || box.userName || '',
+                    log.shift || box.shift || '1 смена',
+                    log.action || 'Сортировка',
+                    log.actionType || 'sort',
+                    log.gmId || box.id,
+                    log.zoneId || null,
+                    log.count || (box.actNumbers ? box.actNumbers.length : 0),
+                    log.details || ''
+                  ]
+                );
+              } catch (errLog) {
+                // Ignore duplicate log errors
+              }
             }
           }
         }
       }
 
-      await client.query('COMMIT');
       return true;
-    } catch (err) {
-      await client.query('ROLLBACK');
-      console.error('❌ Transaction error saving to PostgreSQL:', err.message);
-      return false;
     } finally {
       client.release();
     }

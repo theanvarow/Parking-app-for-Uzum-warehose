@@ -1,0 +1,31 @@
+{
+  "boxes": [
+    {
+      "id": "84-000077777",
+      "actNumbers": [
+        "80-00077777"
+      ],
+      "palletId": "84-000077777",
+      "counterName": "Test Worker",
+      "userName": "Test Worker",
+      "shift": "1 смена",
+      "createdAt": "2026-08-16 12:50:00",
+      "status": "on_pallet",
+      "notes": ""
+    }
+  ],
+  "pallets": [
+    {
+      "id": "84-000077777",
+      "boxIds": [
+        "84-000077777"
+      ],
+      "zoneId": "ZONE-A2",
+      "loaderName": "Test Worker",
+      "status": "parked",
+      "placedAt": "2026-08-16 12:50:00",
+      "notes": ""
+    }
+  ],
+  "zones": []
+}
