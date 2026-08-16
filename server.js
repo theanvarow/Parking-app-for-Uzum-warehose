@@ -153,8 +153,16 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json');
 
     if (req.method === 'GET' && url === '/api/data') {
-      res.writeHead(200);
-      res.end(JSON.stringify(db));
+      fetchDataFromDb().then((liveDb) => {
+        if (liveDb && liveDb.boxes && liveDb.pallets && liveDb.boxes.length >= (db.boxes ? db.boxes.length : 0)) {
+          db = liveDb;
+        }
+        res.writeHead(200);
+        res.end(JSON.stringify(db));
+      }).catch(() => {
+        res.writeHead(200);
+        res.end(JSON.stringify(db));
+      });
       return;
     }
 

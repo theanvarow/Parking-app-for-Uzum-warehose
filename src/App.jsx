@@ -25,7 +25,7 @@ export default function App() {
     return endpoint;
   };
 
-  // REAL-TIME SERVER MULTI-USER SYNCHRONIZATION POLLING
+  // REAL-TIME SERVER MULTI-USER SYNCHRONIZATION POLLING WITH SMART NON-DESTRUCTIVE MERGE
   useEffect(() => {
     const fetchServerData = async () => {
       try {
@@ -36,8 +36,23 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           if (data && data.boxes && data.pallets) {
-            setDbData(data);
-            saveDataToStorage(data);
+            setDbData(prev => {
+              const mergedBoxMap = new Map();
+              (prev.boxes || []).forEach(b => mergedBoxMap.set(b.id, b));
+              (data.boxes || []).forEach(b => mergedBoxMap.set(b.id, b));
+
+              const mergedPalletMap = new Map();
+              (prev.pallets || []).forEach(p => mergedPalletMap.set(p.id, p));
+              (data.pallets || []).forEach(p => mergedPalletMap.set(p.id, p));
+
+              const mergedData = {
+                boxes: Array.from(mergedBoxMap.values()),
+                pallets: Array.from(mergedPalletMap.values()),
+                zones: data.zones && data.zones.length > 0 ? data.zones : (prev.zones || [])
+              };
+              saveDataToStorage(mergedData);
+              return mergedData;
+            });
           }
         }
       } catch (err) {
@@ -46,8 +61,23 @@ export default function App() {
           if (resLocal.ok) {
             const data = await resLocal.json();
             if (data && data.boxes && data.pallets) {
-              setDbData(data);
-              saveDataToStorage(data);
+              setDbData(prev => {
+                const mergedBoxMap = new Map();
+                (prev.boxes || []).forEach(b => mergedBoxMap.set(b.id, b));
+                (data.boxes || []).forEach(b => mergedBoxMap.set(b.id, b));
+
+                const mergedPalletMap = new Map();
+                (prev.pallets || []).forEach(p => mergedPalletMap.set(p.id, p));
+                (data.pallets || []).forEach(p => mergedPalletMap.set(p.id, p));
+
+                const mergedData = {
+                  boxes: Array.from(mergedBoxMap.values()),
+                  pallets: Array.from(mergedPalletMap.values()),
+                  zones: data.zones && data.zones.length > 0 ? data.zones : (prev.zones || [])
+                };
+                saveDataToStorage(mergedData);
+                return mergedData;
+              });
             }
           }
         } catch (e) {}
