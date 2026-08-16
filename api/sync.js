@@ -15,7 +15,21 @@ export default async function handler(req, res) {
 
   try {
     await initDb();
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+    let body = req.body;
+    if (!body || (typeof body === 'object' && Object.keys(body).length === 0)) {
+      const buffers = [];
+      for await (const chunk of req) {
+        buffers.push(chunk);
+      }
+      const raw = Buffer.concat(buffers).toString('utf-8');
+      if (raw) {
+        body = JSON.parse(raw);
+      }
+    } else if (typeof body === 'string') {
+      body = JSON.parse(body);
+    }
+
     if (body && (body.boxes || body.pallets)) {
       await saveDataToDb(body);
       const updated = await fetchDataFromDb();
