@@ -6,17 +6,39 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// AUTO-LOAD .env FILE IF PRESENT
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  try {
+    if (typeof process.loadEnvFile === 'function') {
+      process.loadEnvFile(envPath);
+    } else {
+      const envConfig = fs.readFileSync(envPath, 'utf-8');
+      envConfig.split('\n').forEach(line => {
+        const trimmedLine = line.trim();
+        if (trimmedLine && !trimmedLine.startsWith('#')) {
+          const [key, ...valParts] = trimmedLine.split('=');
+          if (key && valParts.length > 0) {
+            const val = valParts.join('=').trim().replace(/^["']|["']$/g, '');
+            process.env[key.trim()] = val;
+          }
+        }
+      });
+    }
+  } catch (e) {}
+}
+
 const { Pool } = pg;
 
 // PostgreSQL Connection String (Environment variable or local PostgreSQL fallback)
-const connectionString = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/wms_db';
+const connectionString = process.env.DATABASE_URL || '';
 
-const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+const isLocalhost = !connectionString || connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
 
 export const pool = new Pool({
-  connectionString,
+  connectionString: connectionString || 'postgres://postgres:postgres@localhost:5432/wms_db',
   ssl: isLocalhost ? false : { rejectUnauthorized: false },
-  connectionTimeoutMillis: 3000
+  connectionTimeoutMillis: 5000
 });
 
 export const query = (text, params) => pool.query(text, params);
