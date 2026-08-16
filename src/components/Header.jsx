@@ -7,10 +7,12 @@ export default function Header({ activeRole, setActiveRole, onOpenScanner }) {
       {/* App Header Title */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="PALLET PARKING Logo" className="w-12 h-12 object-contain rounded-xl bg-white/10 p-1 border border-white/20 shadow-lg" />
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+            📦
+          </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-wider">PALLET PARKING WMS</h1>
-            <p className="text-xs text-blue-400 font-medium">Palletlar va Aktlarni real-vaqt rejimida boshqarish</p>
+            <h1 className="text-xl font-bold text-white">Ombor Paddon Tizimi</h1>
+            <p className="text-xs text-gray-400">Paddonlar va Aktlarni real-vaqt rejimida kuzatish</p>
           </div>
         </div>
 

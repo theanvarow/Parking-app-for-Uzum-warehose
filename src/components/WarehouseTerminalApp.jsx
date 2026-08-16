@@ -439,20 +439,7 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       <div className="auth-wrapper">
         <div className="auth-card">
           
-          <div className="flex flex-col items-center justify-center mb-3 text-center w-full">
-            <div className="p-1.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl mb-2 flex items-center justify-center">
-              <img 
-                src="/logo.png" 
-                alt="PALLET PARKING Logo" 
-                className="auth-logo-img" 
-                style={{ width: '110px', height: '110px', maxWidth: '110px', maxHeight: '110px', objectFit: 'contain' }} 
-              />
-            </div>
-            <h1 className="text-xl font-black text-white tracking-widest uppercase">PALLET PARKING</h1>
-            <p className="text-xs font-semibold text-blue-400 mt-0.5">Omborda Pallet va Korob Boshqarish Tizimi</p>
-          </div>
-
-          <div className="flex items-center justify-between mb-3 pt-2 border-t border-slate-800">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="auth-title !mb-0">
               {t.authTitle}
             </h2>
@@ -532,7 +519,6 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
             <button onClick={handleSwitchUser} className="wms-back-btn">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <img src="/logo.png" alt="PALLET PARKING Logo" className="w-9 h-9 object-contain rounded-lg bg-white/10 p-0.5 border border-white/20 shadow-md" />
             <div className="wms-header-title-group">
               <span className="wms-header-title">{t.dirTitle}</span>
               <span className="wms-header-subtitle">{t.dirSubtitle}: {currentUser?.name} ({currentUser?.shift})</span>
