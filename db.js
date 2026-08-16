@@ -28,44 +28,58 @@ try {
   }
 } catch (e) {}
 
-const { Pool } = pg;
-
-// PostgreSQL Connection String (Environment variable or direct Neon Cloud fallback for Vercel)
 const NEON_DB_FALLBACK = "postgresql://neondb_owner:npg_7vN5cgAiwmoD@ep-rough-dust-axq99tna-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require";
 const connectionString = process.env.DATABASE_URL || NEON_DB_FALLBACK;
-
 const isLocalhost = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
 
-export const pool = new Pool({
-  connectionString: connectionString || NEON_DB_FALLBACK,
-  ssl: isLocalhost ? false : { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000
-});
+// Helper to create a direct client for reliable serverless execution
+export async function getClient() {
+  const client = new pg.Client({
+    connectionString: connectionString || NEON_DB_FALLBACK,
+    ssl: isLocalhost ? false : { rejectUnauthorized: false },
+    connectionTimeoutMillis: 8000
+  });
+  await client.connect();
+  return client;
+}
 
-export const query = (text, params) => pool.query(text, params);
+export const query = async (text, params) => {
+  const client = await getClient();
+  try {
+    return await client.query(text, params);
+  } finally {
+    await client.end().catch(() => {});
+  }
+};
 
 // Initialize Tables from schema.sql
 export async function initDb() {
+  let client;
   try {
+    client = await getClient();
     const schemaPath = path.join(__dirname, 'schema.sql');
     if (fs.existsSync(schemaPath)) {
       const sql = fs.readFileSync(schemaPath, 'utf-8');
-      await pool.query(sql);
+      await client.query(sql);
       console.log('✅ PostgreSQL database tables successfully initialized!');
       return true;
     }
   } catch (err) {
-    console.warn('⚠️ Could not initialize PostgreSQL DB (will fallback to data_store.json):', err.message);
+    console.warn('⚠️ Could not initialize PostgreSQL DB:', err.message);
+  } finally {
+    if (client) await client.end().catch(() => {});
   }
   return false;
 }
 
 // Fetch all data from PostgreSQL tables
 export async function fetchDataFromDb() {
+  let client;
   try {
-    const boxesRes = await pool.query('SELECT * FROM boxes ORDER BY created_at DESC');
-    const palletsRes = await pool.query('SELECT * FROM pallets ORDER BY placed_at DESC NULLS LAST');
-    const zonesRes = await pool.query('SELECT * FROM zones ORDER BY id ASC');
+    client = await getClient();
+    const boxesRes = await client.query('SELECT * FROM boxes ORDER BY created_at DESC');
+    const palletsRes = await client.query('SELECT * FROM pallets ORDER BY placed_at DESC NULLS LAST');
+    const zonesRes = await client.query('SELECT * FROM zones ORDER BY id ASC');
 
     const boxes = boxesRes.rows.map(row => ({
       id: row.id,
@@ -103,116 +117,115 @@ export async function fetchDataFromDb() {
   } catch (err) {
     console.warn('⚠️ Error fetching from PostgreSQL DB:', err.message);
     return null;
+  } finally {
+    if (client) await client.end().catch(() => {});
   }
 }
 
 // Save or sync dataset into PostgreSQL tables
-// Save or sync dataset into PostgreSQL tables
 export async function saveDataToDb(data) {
   if (!data) return false;
+  let client;
   try {
-    const client = await pool.connect();
-    try {
-      // 1. Sync Boxes
-      if (Array.isArray(data.boxes)) {
-        for (const box of data.boxes) {
-          try {
-            await client.query(
-              `INSERT INTO boxes (id, act_numbers, pallet_id, counter_name, user_name, shift, created_at, status, notes)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-               ON CONFLICT (id) DO UPDATE SET
-                 act_numbers = EXCLUDED.act_numbers,
-                 pallet_id = EXCLUDED.pallet_id,
-                 counter_name = EXCLUDED.counter_name,
-                 user_name = EXCLUDED.user_name,
-                 shift = EXCLUDED.shift,
-                 status = EXCLUDED.status,
-                 notes = EXCLUDED.notes`,
-              [
-                box.id,
-                JSON.stringify(box.actNumbers || []),
-                box.palletId || box.id,
-                box.counterName || '',
-                box.userName || '',
-                box.shift || '1 смена',
-                box.createdAt || new Date(),
-                box.status || 'on_pallet',
-                box.notes || ''
-              ]
-            );
-          } catch (errBox) {
-            console.error(`⚠️ Error saving box ${box.id} to DB:`, errBox.message);
-          }
+    client = await getClient();
+
+    // 1. Sync Boxes
+    if (Array.isArray(data.boxes)) {
+      for (const box of data.boxes) {
+        try {
+          await client.query(
+            `INSERT INTO boxes (id, act_numbers, pallet_id, counter_name, user_name, shift, created_at, status, notes)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             ON CONFLICT (id) DO UPDATE SET
+               act_numbers = EXCLUDED.act_numbers,
+               pallet_id = EXCLUDED.pallet_id,
+               counter_name = EXCLUDED.counter_name,
+               user_name = EXCLUDED.user_name,
+               shift = EXCLUDED.shift,
+               status = EXCLUDED.status,
+               notes = EXCLUDED.notes`,
+            [
+              box.id,
+              JSON.stringify(box.actNumbers || []),
+              box.palletId || box.id,
+              box.counterName || '',
+              box.userName || '',
+              box.shift || '1 смена',
+              box.createdAt || new Date(),
+              box.status || 'on_pallet',
+              box.notes || ''
+            ]
+          );
+        } catch (errBox) {
+          console.error(`⚠️ Error saving box ${box.id} to DB:`, errBox.message);
         }
       }
-
-      // 2. Sync Pallets
-      if (Array.isArray(data.pallets)) {
-        for (const p of data.pallets) {
-          try {
-            await client.query(
-              `INSERT INTO pallets (id, box_ids, zone_id, loader_name, status, placed_at, notes)
-               VALUES ($1, $2, $3, $4, $5, $6, $7)
-               ON CONFLICT (id) DO UPDATE SET
-                 box_ids = EXCLUDED.box_ids,
-                 zone_id = EXCLUDED.zone_id,
-                 loader_name = EXCLUDED.loader_name,
-                 status = EXCLUDED.status,
-                 placed_at = EXCLUDED.placed_at,
-                 notes = EXCLUDED.notes`,
-              [
-                p.id,
-                JSON.stringify(p.boxIds || []),
-                p.zoneId || null,
-                p.loaderName || null,
-                p.status || 'created',
-                p.placedAt || null,
-                p.notes || ''
-              ]
-            );
-          } catch (errPallet) {
-            console.error(`⚠️ Error saving pallet ${p.id} to DB:`, errPallet.message);
-          }
-        }
-      }
-
-      // 3. Sync History Logs
-      if (Array.isArray(data.boxes)) {
-        for (const box of data.boxes) {
-          if (Array.isArray(box.historyLogs)) {
-            for (const log of box.historyLogs) {
-              try {
-                await client.query(
-                  `INSERT INTO history_logs (time, worker, worker_name, user_name, shift, action, action_type, gm_id, zone_id, count, details)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-                  [
-                    log.time || new Date().toISOString(),
-                    log.worker || box.counterName || '',
-                    log.workerName || box.userName || '',
-                    log.userName || box.userName || '',
-                    log.shift || box.shift || '1 смена',
-                    log.action || 'Сортировка',
-                    log.actionType || 'sort',
-                    log.gmId || box.id,
-                    log.zoneId || null,
-                    log.count || (box.actNumbers ? box.actNumbers.length : 0),
-                    log.details || ''
-                  ]
-                );
-              } catch (errLog) {
-                // Ignore duplicate log errors
-              }
-            }
-          }
-        }
-      }
-
-      return true;
-    } finally {
-      client.release();
     }
+
+    // 2. Sync Pallets
+    if (Array.isArray(data.pallets)) {
+      for (const p of data.pallets) {
+        try {
+          await client.query(
+            `INSERT INTO pallets (id, box_ids, zone_id, loader_name, status, placed_at, notes)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (id) DO UPDATE SET
+               box_ids = EXCLUDED.box_ids,
+               zone_id = EXCLUDED.zone_id,
+               loader_name = EXCLUDED.loader_name,
+               status = EXCLUDED.status,
+               placed_at = EXCLUDED.placed_at,
+               notes = EXCLUDED.notes`,
+            [
+              p.id,
+              JSON.stringify(p.boxIds || []),
+              p.zoneId || null,
+              p.loaderName || null,
+              p.status || 'created',
+              p.placedAt || null,
+              p.notes || ''
+            ]
+          );
+        } catch (errPallet) {
+          console.error(`⚠️ Error saving pallet ${p.id} to DB:`, errPallet.message);
+        }
+      }
+    }
+
+    // 3. Sync History Logs
+    if (Array.isArray(data.boxes)) {
+      for (const box of data.boxes) {
+        if (Array.isArray(box.historyLogs)) {
+          for (const log of box.historyLogs) {
+            try {
+              await client.query(
+                `INSERT INTO history_logs (time, worker, worker_name, user_name, shift, action, action_type, gm_id, zone_id, count, details)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                [
+                  log.time || new Date().toISOString(),
+                  log.worker || box.counterName || '',
+                  log.workerName || box.userName || '',
+                  log.userName || box.userName || '',
+                  log.shift || box.shift || '1 смена',
+                  log.action || 'Сортировка',
+                  log.actionType || 'sort',
+                  log.gmId || box.id,
+                  log.zoneId || null,
+                  log.count || (box.actNumbers ? box.actNumbers.length : 0),
+                  log.details || ''
+                ]
+              );
+            } catch (errLog) {}
+          }
+        }
+      }
+    }
+
+    return true;
   } catch (err) {
     console.warn('⚠️ Error connecting to PostgreSQL DB:', err.message);
     return false;
+  } finally {
+    if (client) await client.end().catch(() => {});
   }
 }
