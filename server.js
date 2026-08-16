@@ -97,10 +97,10 @@ function loadDatabase() {
   return { boxes: DEFAULT_BOXES, pallets: DEFAULT_PALLETS, zones: DEFAULT_ZONES };
 }
 
-function saveDatabase(data) {
+async function saveDatabase(data) {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    saveDataToDb(data);
+    await saveDataToDb(data);
   } catch (err) {
     console.error('Error saving data_store.json:', err);
   }
@@ -116,7 +116,7 @@ initDb().then(async (success) => {
       db = dbData;
       console.log('📦 Loaded PostgreSQL database records into server memory.');
     } else {
-      saveDataToDb(db);
+      await saveDatabase(db);
     }
   }
 });

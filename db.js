@@ -80,6 +80,30 @@ export async function fetchDataFromDb() {
     const boxesRes = await client.query('SELECT * FROM boxes ORDER BY created_at DESC');
     const palletsRes = await client.query('SELECT * FROM pallets ORDER BY placed_at DESC NULLS LAST');
     const zonesRes = await client.query('SELECT * FROM zones ORDER BY id ASC');
+    let logsRes = { rows: [] };
+    try {
+      logsRes = await client.query('SELECT * FROM history_logs ORDER BY created_at DESC');
+    } catch (e) {}
+
+    const logsMap = {};
+    for (const log of logsRes.rows) {
+      const key = log.gm_id;
+      if (!logsMap[key]) logsMap[key] = [];
+      logsMap[key].push({
+        id: log.id,
+        time: log.time,
+        worker: log.worker,
+        workerName: log.worker_name,
+        userName: log.user_name,
+        shift: log.shift,
+        action: log.action,
+        actionType: log.action_type,
+        gmId: log.gm_id,
+        zoneId: log.zone_id,
+        count: log.count,
+        details: log.details
+      });
+    }
 
     const boxes = boxesRes.rows.map(row => ({
       id: row.id,
@@ -91,7 +115,7 @@ export async function fetchDataFromDb() {
       createdAt: row.created_at,
       status: row.status,
       notes: row.notes,
-      historyLogs: []
+      historyLogs: logsMap[row.id] || []
     }));
 
     const pallets = palletsRes.rows.map(row => ({
@@ -122,6 +146,20 @@ export async function fetchDataFromDb() {
   }
 }
 
+const parseToUtcIso = (val) => {
+  if (!val) return new Date().toISOString();
+  if (val instanceof Date) return val.toISOString();
+  if (typeof val === 'string') {
+    if (val.includes('Z') || val.includes('+')) {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+    }
+    const d = new Date(`${val.replace(' ', 'T')}+05:00`);
+    return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+  }
+  return new Date().toISOString();
+};
+
 // Save or sync dataset into PostgreSQL tables
 export async function saveDataToDb(data) {
   if (!data) return false;
@@ -133,6 +171,7 @@ export async function saveDataToDb(data) {
     if (Array.isArray(data.boxes)) {
       for (const box of data.boxes) {
         try {
+          const formattedCreatedAt = parseToUtcIso(box.createdAt);
           await client.query(
             `INSERT INTO boxes (id, act_numbers, pallet_id, counter_name, user_name, shift, created_at, status, notes)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -142,6 +181,7 @@ export async function saveDataToDb(data) {
                counter_name = EXCLUDED.counter_name,
                user_name = EXCLUDED.user_name,
                shift = EXCLUDED.shift,
+               created_at = EXCLUDED.created_at,
                status = EXCLUDED.status,
                notes = EXCLUDED.notes`,
             [
@@ -151,7 +191,7 @@ export async function saveDataToDb(data) {
               box.counterName || '',
               box.userName || '',
               box.shift || '1 смена',
-              box.createdAt || new Date(),
+              formattedCreatedAt,
               box.status || 'on_pallet',
               box.notes || ''
             ]
@@ -166,6 +206,7 @@ export async function saveDataToDb(data) {
     if (Array.isArray(data.pallets)) {
       for (const p of data.pallets) {
         try {
+          const formattedPlacedAt = p.placedAt ? parseToUtcIso(p.placedAt) : null;
           await client.query(
             `INSERT INTO pallets (id, box_ids, zone_id, loader_name, status, placed_at, notes)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -182,7 +223,7 @@ export async function saveDataToDb(data) {
               p.zoneId || null,
               p.loaderName || null,
               p.status || 'created',
-              p.placedAt || null,
+              formattedPlacedAt,
               p.notes || ''
             ]
           );
@@ -198,23 +239,36 @@ export async function saveDataToDb(data) {
         if (Array.isArray(box.historyLogs)) {
           for (const log of box.historyLogs) {
             try {
-              await client.query(
-                `INSERT INTO history_logs (time, worker, worker_name, user_name, shift, action, action_type, gm_id, zone_id, count, details)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-                [
-                  log.time || new Date().toISOString(),
-                  log.worker || box.counterName || '',
-                  log.workerName || box.userName || '',
-                  log.userName || box.userName || '',
-                  log.shift || box.shift || '1 смена',
-                  log.action || 'Сортировка',
-                  log.actionType || 'sort',
-                  log.gmId || box.id,
-                  log.zoneId || null,
-                  log.count || (box.actNumbers ? box.actNumbers.length : 0),
-                  log.details || ''
-                ]
+              const formattedLogTime = parseToUtcIso(log.time);
+              const logGmId = log.gmId || box.id;
+              const logActionType = log.actionType || 'sort';
+              const logTimeStr = log.time || '';
+
+              const existingLog = await client.query(
+                `SELECT id FROM history_logs WHERE gm_id = $1 AND action_type = $2 AND time = $3 LIMIT 1`,
+                [logGmId, logActionType, logTimeStr]
               );
+
+              if (existingLog.rows.length === 0) {
+                await client.query(
+                  `INSERT INTO history_logs (time, worker, worker_name, user_name, shift, action, action_type, gm_id, zone_id, count, details, created_at)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+                  [
+                    logTimeStr || new Date().toISOString(),
+                    log.worker || box.counterName || '',
+                    log.workerName || box.userName || '',
+                    log.userName || box.userName || '',
+                    log.shift || box.shift || '1 смена',
+                    log.action || 'Сортировка',
+                    logActionType,
+                    logGmId,
+                    log.zoneId || null,
+                    log.count || (box.actNumbers ? box.actNumbers.length : 0),
+                    log.details || '',
+                    formattedLogTime
+                  ]
+                );
+              }
             } catch (errLog) {}
           }
         }

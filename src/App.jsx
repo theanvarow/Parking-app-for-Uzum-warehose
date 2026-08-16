@@ -200,9 +200,6 @@ export default function App() {
     const timestamp = getFormattedNow();
     const cleanLoaderName = loaderName ? loaderName.replace(/\s*\([^)]*\)/, '') : "Xodim";
 
-    const targetBox = dbData.boxes.find(b => b.id === palletId || b.palletId === palletId);
-    const prevLogs = targetBox?.historyLogs || [];
-
     const parkHistoryLog = {
       id: Date.now(),
       time: timestamp,
@@ -217,8 +214,11 @@ export default function App() {
       details: `${palletId} pallet ${zoneId} zonasiga joylashtirildi`
     };
 
+    let boxFound = false;
     const updatedBoxes = dbData.boxes.map((b) => {
       if (b.id === palletId || b.palletId === palletId) {
+        boxFound = true;
+        const prevLogs = b.historyLogs || [];
         return {
           ...b,
           historyLogs: [...prevLogs, parkHistoryLog]
@@ -226,6 +226,21 @@ export default function App() {
       }
       return b;
     });
+
+    if (!boxFound) {
+      updatedBoxes.unshift({
+        id: palletId,
+        actNumbers: [],
+        palletId: palletId,
+        counterName: cleanLoaderName,
+        userName: cleanLoaderName,
+        shift: '1 смена',
+        createdAt: timestamp,
+        status: 'on_pallet',
+        notes: 'Parkovka qilingan pallet',
+        historyLogs: [parkHistoryLog]
+      });
+    }
 
     let palletFound = false;
     const updatedPallets = dbData.pallets.map((p) => {

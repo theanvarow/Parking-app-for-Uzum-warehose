@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS boxes (
   counter_name VARCHAR(255),
   user_name VARCHAR(255),
   shift VARCHAR(50),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   status VARCHAR(50) DEFAULT 'on_pallet',
   notes TEXT
 );
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS pallets (
   zone_id VARCHAR(100),
   loader_name VARCHAR(255),
   status VARCHAR(50) DEFAULT 'created',
-  placed_at TIMESTAMP,
+  placed_at TIMESTAMPTZ,
   notes TEXT
 );
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS history_logs (
   zone_id VARCHAR(100),
   count INT DEFAULT 0,
   details TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- INITIAL SEED ZONES
