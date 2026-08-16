@@ -439,11 +439,16 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
       <div className="auth-wrapper">
         <div className="auth-card">
           
-          <div className="flex flex-col items-center justify-center mb-4 text-center">
-            <div className="p-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl mb-3">
-              <img src="/logo.png" alt="PALLET PARKING Logo" className="w-24 h-24 sm:w-28 sm:h-28 object-contain rounded-xl" />
+          <div className="flex flex-col items-center justify-center mb-3 text-center w-full">
+            <div className="p-1.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl mb-2 flex items-center justify-center">
+              <img 
+                src="/logo.png" 
+                alt="PALLET PARKING Logo" 
+                className="auth-logo-img" 
+                style={{ width: '110px', height: '110px', maxWidth: '110px', maxHeight: '110px', objectFit: 'contain' }} 
+              />
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-widest uppercase">PALLET PARKING</h1>
+            <h1 className="text-xl font-black text-white tracking-widest uppercase">PALLET PARKING</h1>
             <p className="text-xs font-semibold text-blue-400 mt-0.5">Omborda Pallet va Korob Boshqarish Tizimi</p>
           </div>
 

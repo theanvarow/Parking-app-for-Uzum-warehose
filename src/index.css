@@ -762,6 +762,18 @@ input, select, textarea {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  overflow: hidden;
+}
+
+.auth-logo-img {
+  width: 110px !important;
+  height: 110px !important;
+  max-width: 110px !important;
+  max-height: 110px !important;
+  object-fit: contain !important;
+  border-radius: 0.875rem !important;
+  margin: 0 auto !important;
+  display: block !important;
 }
 
 .auth-title {
