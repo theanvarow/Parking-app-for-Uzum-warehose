@@ -20,11 +20,19 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const isInitialMount = useRef(true);
 
+  // Helper for resilient API fetching across dev, local, and production
+  const getApiUrl = (endpoint) => {
+    return endpoint;
+  };
+
   // REAL-TIME SERVER MULTI-USER SYNCHRONIZATION POLLING
   useEffect(() => {
     const fetchServerData = async () => {
       try {
-        const res = await fetch('/api/data');
+        let res = await fetch('/api/data');
+        if (!res.ok) {
+          res = await fetch('http://localhost:3001/api/data');
+        }
         if (res.ok) {
           const data = await res.json();
           if (data && data.boxes && data.pallets) {
@@ -33,13 +41,20 @@ export default function App() {
           }
         }
       } catch (err) {
-        // Fallback to local storage if offline
+        try {
+          const resLocal = await fetch('http://localhost:3001/api/data');
+          if (resLocal.ok) {
+            const data = await resLocal.json();
+            if (data && data.boxes && data.pallets) {
+              setDbData(data);
+              saveDataToStorage(data);
+            }
+          }
+        } catch (e) {}
       }
     };
 
     fetchServerData();
-
-    // Poll server every 2.5 seconds to sync data across all 10+ devices instantly
     const interval = setInterval(fetchServerData, 2500);
     return () => clearInterval(interval);
   }, []);
@@ -47,13 +62,26 @@ export default function App() {
   // Broadcast state updates to server API
   const syncWithServer = async (updatedData) => {
     try {
-      await fetch('/api/sync', {
+      let res = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData)
       });
+      if (!res.ok) {
+        await fetch('http://localhost:3001/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedData)
+        });
+      }
     } catch (e) {
-      // Offline fallback
+      try {
+        await fetch('http://localhost:3001/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedData)
+        });
+      } catch (err) {}
     }
   };
 
