@@ -348,9 +348,22 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
 
         let historyLogs = box.historyLogs || [];
 
-        const lastParkLog = [...historyLogs]
-          .sort((a, b) => new Date(b.time || b.created_at || 0) - new Date(a.time || a.created_at || 0))
-          .find(l => l.actionType === 'park' || l.action === 'Парковка');
+        const safeParseTime = (dateStr) => {
+          if (!dateStr) return 0;
+          if (typeof dateStr === 'number') return dateStr;
+          const str = String(dateStr).trim().replace(' ', 'T');
+          const t = new Date(str).getTime();
+          return isNaN(t) ? 0 : t;
+        };
+
+        // Always sort historyLogs newest-first
+        historyLogs = [...historyLogs].sort((a, b) => {
+          const timeA = safeParseTime(a.time || a.createdAt || a.created_at);
+          const timeB = safeParseTime(b.time || b.createdAt || b.created_at);
+          return timeB - timeA;
+        });
+
+        const lastParkLog = historyLogs.find(l => l.actionType === 'park' || l.action === 'Парковка');
         if (lastParkLog && lastParkLog.zoneId) {
           zoneDisplay = lastParkLog.zoneId;
         }
