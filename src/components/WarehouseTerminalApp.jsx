@@ -371,9 +371,24 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
           return timeB - timeA;
         });
 
+        const extractZoneFromLog = (log) => {
+          if (log && log.zoneId && log.zoneId !== '—') return log.zoneId;
+          if (log && log.details) {
+            const m = log.details.match(/(?:zonasiga|зону|zona)\s+([^\s]+)/i);
+            if (m && m[1]) return m[1];
+          }
+          return null;
+        };
+
         // Pick the MOST RECENT park log zone
-        const parkLogs = historyLogs.filter(l => (l.actionType === 'park' || l.action === 'Парковка') && l.zoneId);
-        let latestZone = parkLogs.length > 0 ? parkLogs[0].zoneId : (pallet && pallet.zoneId ? pallet.zoneId : null);
+        const parkLogs = historyLogs.filter(l => (l.actionType === 'park' || l.action === 'Парковка'));
+        let latestZone = null;
+        if (parkLogs.length > 0) {
+          latestZone = extractZoneFromLog(parkLogs[0]);
+        }
+        if (!latestZone && pallet && pallet.zoneId) {
+          latestZone = pallet.zoneId;
+        }
 
         const matchedZoneObj = latestZone ? dbData.zones.find(z => z.id === latestZone || z.name === latestZone) : null;
         let zoneDisplay = matchedZoneObj ? matchedZoneObj.name : latestZone;

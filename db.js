@@ -244,9 +244,10 @@ export async function saveDataToDb(data) {
               const logActionType = log.actionType || 'sort';
               const logTimeStr = log.time || '';
 
+              const logZoneId = log.zoneId || null;
               const existingLog = await client.query(
-                `SELECT id FROM history_logs WHERE gm_id = $1 AND action_type = $2 AND time = $3 LIMIT 1`,
-                [logGmId, logActionType, logTimeStr]
+                `SELECT id FROM history_logs WHERE gm_id = $1 AND action_type = $2 AND time = $3 AND (zone_id = $4 OR ($4::text IS NULL AND zone_id IS NULL)) LIMIT 1`,
+                [logGmId, logActionType, logTimeStr, logZoneId]
               );
 
               if (existingLog.rows.length === 0) {
