@@ -344,10 +344,6 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
         const pallet = dbData.pallets.find(p => p.id === box.palletId || p.id === box.id);
         const zone = pallet && pallet.zoneId ? dbData.zones.find(z => z.id === pallet.zoneId || z.name === pallet.zoneId) : null;
         
-        let zoneDisplay = zone ? zone.name : (pallet && pallet.zoneId ? pallet.zoneId : null);
-
-        let historyLogs = box.historyLogs || [];
-
         const safeParseTime = (dateStr) => {
           if (!dateStr) return 0;
           if (typeof dateStr === 'number') return dateStr;
@@ -356,17 +352,31 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
           return isNaN(t) ? 0 : t;
         };
 
-        // Always sort historyLogs newest-first
-        historyLogs = [...historyLogs].sort((a, b) => {
+        // Combine box logs and global history logs for this pallet
+        const allLogs = [
+          ...(box.historyLogs || []),
+          ...((dbData.historyLogs || []).filter(l => l.gm_id === box.id || l.gm_id === box.palletId || l.gmId === box.id || l.gmId === box.palletId))
+        ];
+
+        // Deduplicate logs by unique id/time
+        const logMap = new Map();
+        allLogs.forEach(l => {
+          const key = `${l.id || ''}_${l.time || l.created_at || l.createdAt}_${l.zoneId || l.action}`;
+          logMap.set(key, l);
+        });
+
+        let historyLogs = Array.from(logMap.values()).sort((a, b) => {
           const timeA = safeParseTime(a.time || a.createdAt || a.created_at);
           const timeB = safeParseTime(b.time || b.createdAt || b.created_at);
           return timeB - timeA;
         });
 
-        const lastParkLog = historyLogs.find(l => l.actionType === 'park' || l.action === 'Парковка');
-        if (lastParkLog && lastParkLog.zoneId) {
-          zoneDisplay = lastParkLog.zoneId;
-        }
+        // Pick the MOST RECENT park log zone
+        const parkLogs = historyLogs.filter(l => (l.actionType === 'park' || l.action === 'Парковка') && l.zoneId);
+        let latestZone = parkLogs.length > 0 ? parkLogs[0].zoneId : (pallet && pallet.zoneId ? pallet.zoneId : null);
+
+        const matchedZoneObj = latestZone ? dbData.zones.find(z => z.id === latestZone || z.name === latestZone) : null;
+        let zoneDisplay = matchedZoneObj ? matchedZoneObj.name : latestZone;
 
         if (historyLogs.length === 0) {
           historyLogs = [
