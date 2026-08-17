@@ -333,111 +333,160 @@ export default function WarehouseTerminalApp({ dbData, onAddBox, onUpdatePalletZ
     setFioInput('');
   };
 
-  // Deep Search Logic with Audit History Log
+  // Deep Search Logic with Audit History Log & Resilient Barcode Matching
   const searchResult = React.useMemo(() => {
-    const q = searchActQuery.trim().toLowerCase();
-    if (!q) return null;
+    const rawQ = searchActQuery.trim();
+    if (!rawQ) return null;
+    const q = rawQ.toLowerCase();
+    const cleanQ = q.replace(/[^a-z0-9]/g, '');
 
-    for (const box of dbData.boxes) {
-      const matchedAct = box.actNumbers.find(a => a.toLowerCase().includes(q));
-      if (matchedAct || box.id.toLowerCase().includes(q)) {
-        const pallet = dbData.pallets.find(p => p.id === box.palletId || p.id === box.id);
-        const zone = pallet && pallet.zoneId ? dbData.zones.find(z => z.id === pallet.zoneId || z.name === pallet.zoneId) : null;
-        
-        const safeParseTime = (dateStr) => {
-          if (!dateStr) return 0;
-          if (typeof dateStr === 'number') return dateStr;
-          const str = String(dateStr).trim().replace(' ', 'T');
-          const t = new Date(str).getTime();
-          return isNaN(t) ? 0 : t;
-        };
+    const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-        // Combine box logs and global history logs for this pallet
-        const allLogs = [
-          ...(box.historyLogs || []),
-          ...((dbData.historyLogs || []).filter(l => l.gm_id === box.id || l.gm_id === box.palletId || l.gmId === box.id || l.gmId === box.palletId))
-        ];
+    const safeParseTime = (dateStr) => {
+      if (!dateStr) return 0;
+      if (typeof dateStr === 'number') return dateStr;
+      const str = String(dateStr).trim().replace(' ', 'T');
+      const t = new Date(str).getTime();
+      return isNaN(t) ? 0 : t;
+    };
 
-        // Deduplicate logs by unique id/time
-        const logMap = new Map();
-        allLogs.forEach(l => {
-          const key = `${l.id || ''}_${l.time || l.created_at || l.createdAt}_${l.zoneId || l.action}`;
-          logMap.set(key, l);
-        });
+    const extractZoneFromLog = (log) => {
+      if (log && log.zoneId && log.zoneId !== '—') return log.zoneId;
+      if (log && log.details) {
+        const m = log.details.match(/(?:zonasiga|зону|zona)\s+([^\s]+)/i);
+        if (m && m[1]) return m[1];
+      }
+      return null;
+    };
 
-        let historyLogs = Array.from(logMap.values()).sort((a, b) => {
-          const timeA = safeParseTime(a.time || a.createdAt || a.created_at);
-          const timeB = safeParseTime(b.time || b.createdAt || b.created_at);
-          return timeB - timeA;
-        });
+    let targetBox = null;
+    let matchedAct = null;
 
-        const extractZoneFromLog = (log) => {
-          if (log && log.zoneId && log.zoneId !== '—') return log.zoneId;
-          if (log && log.details) {
-            const m = log.details.match(/(?:zonasiga|зону|zona)\s+([^\s]+)/i);
-            if (m && m[1]) return m[1];
-          }
-          return null;
-        };
-
-        // Pick the MOST RECENT park log zone
-        const parkLogs = historyLogs.filter(l => (l.actionType === 'park' || l.action === 'Парковка'));
-        let latestZone = null;
-        if (parkLogs.length > 0) {
-          latestZone = extractZoneFromLog(parkLogs[0]);
-        }
-        if (!latestZone && pallet && pallet.zoneId) {
-          latestZone = pallet.zoneId;
-        }
-
-        const matchedZoneObj = latestZone ? dbData.zones.find(z => z.id === latestZone || z.name === latestZone) : null;
-        let zoneDisplay = matchedZoneObj ? matchedZoneObj.name : latestZone;
-
-        if (historyLogs.length === 0) {
-          historyLogs = [
-            {
-              id: 1,
-              time: box.createdAt || '2026-07-29 17:50:00',
-              worker: box.counterName || "Xodim (1-smena)",
-              workerName: box.userName || "Xodim",
-              userName: box.userName || "Xodim",
-              shift: box.shift || '1 смена',
-              action: 'Сортировка',
-              actionType: 'sort',
-              gmId: box.id,
-              count: box.actNumbers.length,
-              details: `${box.id} pallet va ${box.actNumbers.length} ta korob sortirovka qilindi`
-            }
-          ];
-
-          if (pallet && pallet.status === 'parked') {
-            historyLogs.push({
-              id: 2,
-              time: pallet.placedAt || '2026-07-29 17:54:00',
-              worker: pallet.loaderName || "Xodim (Yuklovchi)",
-              workerName: pallet.loaderName || "Xodim",
-              userName: pallet.loaderName || "Xodim",
-              shift: '1 смена',
-              action: 'Парковка',
-              actionType: 'park',
-              gmId: box.id,
-              zoneId: pallet.zoneId,
-              details: `${box.id} pallet ${pallet.zoneId} zonasiga joylashtirildi`
-            });
-          }
-        }
-
-        return {
-          searchedTerm: q,
-          act: matchedAct || q,
-          box,
-          pallet,
-          zoneDisplay,
-          historyLogs
-        };
+    // 1. Search in dbData.boxes
+    for (const box of (dbData.boxes || [])) {
+      const acts = Array.isArray(box.actNumbers) ? box.actNumbers : [];
+      const foundAct = acts.find(a => norm(a).includes(cleanQ) || a.toLowerCase().includes(q));
+      if (foundAct || norm(box.id).includes(cleanQ) || norm(box.palletId).includes(cleanQ)) {
+        targetBox = box;
+        matchedAct = foundAct || rawQ;
+        break;
       }
     }
-    return null;
+
+    // 2. Search in dbData.pallets if not found in boxes
+    let pallet = null;
+    if (targetBox) {
+      pallet = (dbData.pallets || []).find(p => p.id === targetBox.palletId || p.id === targetBox.id);
+    } else {
+      pallet = (dbData.pallets || []).find(p => norm(p.id).includes(cleanQ));
+      if (pallet) {
+        targetBox = (dbData.boxes || []).find(b => b.id === pallet.id || b.palletId === pallet.id) || {
+          id: pallet.id,
+          actNumbers: [pallet.id],
+          palletId: pallet.id,
+          counterName: pallet.loaderName || 'Xodim',
+          createdAt: pallet.placedAt || new Date().toISOString(),
+          status: pallet.status || 'parked',
+          historyLogs: []
+        };
+        matchedAct = rawQ;
+      }
+    }
+
+    // 3. Search in dbData.historyLogs if still not found
+    if (!targetBox && !pallet && Array.isArray(dbData.historyLogs)) {
+      const foundLog = dbData.historyLogs.find(l => norm(l.gm_id || l.gmId).includes(cleanQ) || norm(l.details).includes(cleanQ));
+      if (foundLog) {
+        const targetId = foundLog.gm_id || foundLog.gmId || rawQ;
+        targetBox = {
+          id: targetId,
+          actNumbers: [targetId],
+          palletId: targetId,
+          counterName: foundLog.worker || 'Xodim',
+          createdAt: foundLog.time || foundLog.created_at || new Date().toISOString(),
+          status: 'parked',
+          historyLogs: [foundLog]
+        };
+        matchedAct = rawQ;
+      }
+    }
+
+    if (!targetBox) return null;
+
+    // Combine box logs and global history logs for this targetBox
+    const allLogs = [
+      ...(targetBox.historyLogs || []),
+      ...((dbData.historyLogs || []).filter(l => l.gm_id === targetBox.id || l.gm_id === targetBox.palletId || l.gmId === targetBox.id || l.gmId === targetBox.palletId))
+    ];
+
+    // Deduplicate logs by unique key
+    const logMap = new Map();
+    allLogs.forEach(l => {
+      const key = `${l.id || ''}_${l.time || l.created_at || l.createdAt}_${l.zoneId || l.action}`;
+      logMap.set(key, l);
+    });
+
+    let historyLogs = Array.from(logMap.values()).sort((a, b) => {
+      const timeA = safeParseTime(a.time || a.createdAt || a.created_at);
+      const timeB = safeParseTime(b.time || b.createdAt || b.created_at);
+      return timeB - timeA;
+    });
+
+    // Pick the MOST RECENT park log zone
+    const parkLogs = historyLogs.filter(l => (l.actionType === 'park' || l.action === 'Парковка'));
+    let latestZone = null;
+    if (parkLogs.length > 0) {
+      latestZone = extractZoneFromLog(parkLogs[0]);
+    }
+    if (!latestZone && pallet && pallet.zoneId) {
+      latestZone = pallet.zoneId;
+    }
+
+    const matchedZoneObj = latestZone ? dbData.zones.find(z => z.id === latestZone || z.name === latestZone) : null;
+    let zoneDisplay = matchedZoneObj ? matchedZoneObj.name : latestZone;
+
+    if (historyLogs.length === 0) {
+      historyLogs = [
+        {
+          id: 1,
+          time: targetBox.createdAt || new Date().toISOString(),
+          worker: targetBox.counterName || "Xodim (1-smena)",
+          workerName: targetBox.userName || "Xodim",
+          userName: targetBox.userName || "Xodim",
+          shift: targetBox.shift || '1 смена',
+          action: 'Сортировка',
+          actionType: 'sort',
+          gmId: targetBox.id,
+          count: Array.isArray(targetBox.actNumbers) ? targetBox.actNumbers.length : 1,
+          details: `${targetBox.id} pallet va ${Array.isArray(targetBox.actNumbers) ? targetBox.actNumbers.length : 1} ta korob sortirovka qilindi`
+        }
+      ];
+
+      if (pallet && pallet.status === 'parked') {
+        historyLogs.push({
+          id: 2,
+          time: pallet.placedAt || new Date().toISOString(),
+          worker: pallet.loaderName || "Xodim (Yuklovchi)",
+          workerName: pallet.loaderName || "Xodim",
+          userName: pallet.loaderName || "Xodim",
+          shift: '1 смена',
+          action: 'Парковка',
+          actionType: 'park',
+          gmId: targetBox.id,
+          zoneId: pallet.zoneId,
+          details: `${targetBox.id} pallet ${pallet.zoneId} zonasiga joylashtirildi`
+        });
+      }
+    }
+
+    return {
+      searchedTerm: rawQ,
+      act: matchedAct || rawQ,
+      box: targetBox,
+      pallet,
+      zoneDisplay,
+      historyLogs
+    };
   }, [searchActQuery, dbData]);
 
   // QR / Camera Scanner callback
