@@ -48,7 +48,8 @@ export default function App() {
               const mergedData = {
                 boxes: Array.from(mergedBoxMap.values()),
                 pallets: Array.from(mergedPalletMap.values()),
-                zones: data.zones && data.zones.length > 0 ? data.zones : (prev.zones || [])
+                zones: data.zones && data.zones.length > 0 ? data.zones : (prev.zones || []),
+                historyLogs: data.historyLogs && data.historyLogs.length > 0 ? data.historyLogs : (prev.historyLogs || [])
               };
               saveDataToStorage(mergedData);
               return mergedData;
@@ -73,7 +74,8 @@ export default function App() {
                 const mergedData = {
                   boxes: Array.from(mergedBoxMap.values()),
                   pallets: Array.from(mergedPalletMap.values()),
-                  zones: data.zones && data.zones.length > 0 ? data.zones : (prev.zones || [])
+                  zones: data.zones && data.zones.length > 0 ? data.zones : (prev.zones || []),
+                  historyLogs: data.historyLogs && data.historyLogs.length > 0 ? data.historyLogs : (prev.historyLogs || [])
                 };
                 saveDataToStorage(mergedData);
                 return mergedData;
@@ -273,7 +275,8 @@ export default function App() {
     const nextData = {
       ...dbData,
       boxes: updatedBoxes,
-      pallets: updatedPallets
+      pallets: updatedPallets,
+      historyLogs: [parkHistoryLog, ...(dbData.historyLogs || [])]
     };
 
     setDbData(nextData);
